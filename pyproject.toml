@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "fa-tmpl"
+name = "krasnodar-backend"
 version = "0.1.0"
 description = ""
 authors = ["aoleynik <aoleynik@aflt-systems.ru>"]
