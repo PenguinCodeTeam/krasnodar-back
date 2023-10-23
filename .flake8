@@ -1,0 +1,31 @@
+[flake8]
+count = 1
+doctests = 1
+exclude =
+    .git,
+    .local,
+    __pycache__,
+    .pytest_cache,
+    .venv,
+    .mypy_cache,
+    __init__.py
+filename =
+    *.py
+hang-closing = 1
+ignore =
+    E133,
+    E306,
+    E203,
+    E266,
+    E501,
+    E722,
+    E731,
+    W503,
+    W504
+max-complexity = 10
+max-line-length = 160
+show_source = 0
+statistics = 1
+verbose = 1
+quiet = 0
+extend-select = B001, B006, B007, B012, B017, B018, B029, T201, T203, T204, Q0
