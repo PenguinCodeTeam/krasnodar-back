@@ -1,6 +1,6 @@
 [general]
 ignore=B6, T1
 [title-match-regex]
-regex = PROBLEM-[0-9]+
+regex = PINCODE-[0-9]+
 [body-is-missing]
 ignore-merge-commits=false
