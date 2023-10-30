@@ -49,12 +49,6 @@ known_local_folder  = ['app']
 known_first_party = ['fastapi', 'starlette', 'pydantic', 'pytest', 'uvicorn', 'httpx']
 sections = ['FUTURE', 'STDLIB', 'FIRSTPARTY', 'THIRDPARTY', 'LOCALFOLDER']
 
-[tool.semgrep]
-additional_args = "--severity=error"
-paths = ["app/"]
-exclude_paths = [".venv","./app/tests/*.py"]
-
-
 [tool.poetry.dependencies]
 python = "~3.12"
 httpx = "~0.25.0"
