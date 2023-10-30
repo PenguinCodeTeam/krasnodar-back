@@ -52,10 +52,11 @@ sections = ['FUTURE', 'STDLIB', 'FIRSTPARTY', 'THIRDPARTY', 'LOCALFOLDER']
 [tool.poetry.dependencies]
 python = "~3.12"
 httpx = "~0.25.0"
-fastapi = "~0.103.2"
+fastapi = "0.104.1"
 pyyaml = "~6.0"
 uvicorn = {extras = ["standart"], version = "~0.23.2"}
 gunicorn = "~21.2.0"
+pyjwt = "^2.8.0"
 
 [tool.poetry.group.test]
 optional=true
