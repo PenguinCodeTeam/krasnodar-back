@@ -30,3 +30,22 @@ class UnknownException(AppException):
     system_prefix = 'APP'
     msg = 'Service error'
     error_code = 1
+
+
+class AuthException(AppException):
+    system_prefix = 'AUTH'
+
+
+class InvalidTokenException(AuthException):
+    msg = 'Token is invalid'
+    error_code = 11
+
+
+class ExpiredTokenException(AuthException):
+    msg = 'Token is expired'
+    error_code = 12
+
+
+class AccessForbiddenException(AuthException):
+    msg = 'Access is forbidden'
+    error_code = 13
