@@ -1,7 +1,7 @@
 import httpx
 
 
-OPEN_ROUTE_SERVICE_REPOSITORY = "https://api.openrouteservice.org/v2/directions/driving-car"
+OPEN_ROUTE_SERVICE_URL = "https://api.openrouteservice.org/v2/directions/driving-car"
 
 
 class OpenRouteServiceRepository:
@@ -21,7 +21,7 @@ class OpenRouteServiceRepository:
     async def get_duration(self, start_point: str, end_point: str) -> float:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
-                OPEN_ROUTE_SERVICE_REPOSITORY,
+                OPEN_ROUTE_SERVICE_URL,
                 params=self.__params(
                     start_point=self.convert_point_to_str(start_point),
                     end_point=self.convert_point_to_str(end_point),
