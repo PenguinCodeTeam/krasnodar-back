@@ -1,9 +1,11 @@
 import httpx
 
 
+YANDEX_GEOCODER_URL = "https://geocode-maps.yandex.ru/1.x"
+
+
 class YandexGeocoderRepository:
     def __init__(self, api_key: str):
-        self.api_url = "https://geocode-maps.yandex.ru/1.x"
         self.api_key = api_key
 
     def __params(self, city: str, address: str) -> dict:
@@ -14,10 +16,10 @@ class YandexGeocoderRepository:
             "results": 1,
         }
 
-    async def get_coordinates(self, city: str, address: str) -> tuple[float] | None:
+    async def get_coordinates(self, city: str, address: str) -> tuple[float]:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
-                self.api_url,
+                YANDEX_GEOCODER_URL,
                 params=self.__params(city=city, address=address),
             )
             data: dict = resp.json()
@@ -27,4 +29,4 @@ class YandexGeocoderRepository:
         geo_object: dict = feature_member.get("GeoObject", {})
         point: dict = geo_object.get("Point", {})
         pos: str | None = point.get("pos", None)
-        return tuple(map(float, pos.split())) if pos else None
+        return tuple(map(float, pos.split())) if pos else ()
