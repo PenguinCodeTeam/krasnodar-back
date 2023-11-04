@@ -18,7 +18,7 @@ class OpenRouteServiceRepository:
     def convert_point_to_str(self, point: tuple):
         return ','.join(map(str, point))
 
-    async def get_duration(self, start_point: str, end_point: str) -> float:
+    async def get_duration(self, start_point: tuple, end_point: tuple) -> float:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 OPEN_ROUTE_SERVICE_URL,
