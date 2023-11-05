@@ -12,7 +12,7 @@ class User(Base):
     __tablename__ = 'users'
 
     id: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4, primary_key=True, unique=True)
-    login: Mapped[str] = mapped_column(primary_key=True)
+    login: Mapped[str] = mapped_column(unique=True)
     password_hash: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     name: Mapped[str]
     surname: Mapped[str]

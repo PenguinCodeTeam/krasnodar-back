@@ -58,7 +58,7 @@ class UserRepository(DatabaseRepository):
         patronymic: str,
         role: RoleEnum,
     ) -> User:
-        user = User(login=login, password=hash_password(password), name=name, surname=surname, patronymic=patronymic, role=role)
+        user = User(login=login, password_hash=hash_password(password), name=name, surname=surname, patronymic=patronymic, role=role)
         async with self.transaction() as session:
             session.add(user)
 

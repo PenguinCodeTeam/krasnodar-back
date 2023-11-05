@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from internal.api.v1.schemas.common import InputDataRow, User
+from internal.api.v1.schemas.common import InputDataRow
 from internal.core.types import RoleEnum
 
 
@@ -23,9 +23,12 @@ class SetInputDataRequest(BaseModel):
     input_data: list[InputDataRow]
 
 
-class CreateManagerRequest(User):
+class CreateManagerRequest(BaseModel):
+    login: str
     password: str
-    role: RoleEnum = RoleEnum.MANAGER
+    name: str
+    surname: str
+    patronymic: str
 
 
 class UpdateManagerRequest(BaseModel):
