@@ -3,15 +3,19 @@ from typing import Optional
 from pydantic import BaseModel
 
 from internal.api.v1.schemas.common import EmployeeUser
-from internal.core.types import RoleEnum
+from internal.core.types import WorkerGradeEnum, RoleEnum
 
 
 class FinishTaskRequest(BaseModel):
     comment: str
 
 
+class GetEmployeeRequest(BaseModel):
+    grade: WorkerGradeEnum
+
+
 class CreateEmployeeUserRequest(EmployeeUser):
-    pass
+    password: str
 
 
 class UpdateUserRequest(BaseModel):

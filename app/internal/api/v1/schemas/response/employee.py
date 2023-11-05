@@ -1,23 +1,6 @@
-from datetime import timedelta
-from uuid import UUID
-
 from pydantic import BaseModel
 
-from internal.api.v1.schemas.common import EmployeeUser
-from internal.core.types import PriorityEnum
-
-
-class Point(BaseModel):
-    latitude: float
-    longitude: float
-
-
-class Task(BaseModel):
-    id: UUID
-    name: str
-    priority: PriorityEnum
-    time: timedelta
-    point: Point
+from internal.api.v1.schemas.common import EmployeeUser, Task
 
 
 class GetEmployeeTasksResponse(BaseModel):
@@ -26,6 +9,10 @@ class GetEmployeeTasksResponse(BaseModel):
 
 class GetEmployeeInfo(EmployeeUser):
     pass
+
+
+class GetAllEmployeesResponse(BaseModel):
+    employees: list[EmployeeUser]
 
 
 class GetEmployeeUserResponse(EmployeeUser):
