@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Depends
 
 from internal.api.v1.schemas.request.manager import CreateManagerRequest, SetInputDataRequest, UpdateManagerRequest
 from internal.api.v1.schemas.response.manager import CreateManagerResponse, GetInputDataResponse, GetManagerResponse, GetManagersResponse
-from internal.core.dependencies.authentication import ManagerAuthorize
+from internal.core.dependencies.authorization import ManagerAuthorize
 from internal.services.user import UserService
 
 
