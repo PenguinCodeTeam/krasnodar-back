@@ -1,12 +1,7 @@
-import config
-from sqlalchemy import URL
+from ._session import _engine
+from .models.base import Base
 
 
-connection_string = URL.create(
-    drivername='postgresql+asyncpg',
-    username=config.POSTGRES_USER,
-    password=config.POSTGRES_PASSWORD,
-    database=config.POSTGRES_DB,
-    host=config.POSTGRES_HOST,
-    port=config.POSTGRES_PORT,
-)
+async def create_tables():
+    async with _engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

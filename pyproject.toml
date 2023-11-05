@@ -59,6 +59,9 @@ gunicorn = "~21.2.0"
 pyjwt = "^2.8.0"
 alembic = "^1.12.1"
 greenlet = "^3.0.1"
+bcrypt = "^4.0.1"
+passlib = "^1.7.4"
+asyncpg = "^0.29.0"
 
 [tool.poetry.group.test]
 optional=true

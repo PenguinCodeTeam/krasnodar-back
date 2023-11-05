@@ -1,6 +1,16 @@
-from internal.repositories.db.helpers import connection_string
+import config
+from sqlalchemy import URL
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+
+connection_string = URL.create(
+    drivername='postgresql+asyncpg',
+    username=config.POSTGRES_USER,
+    password=config.POSTGRES_PASSWORD,
+    database=config.POSTGRES_DB,
+    host=config.POSTGRES_HOST,
+    port=config.POSTGRES_PORT,
+)
 
 _engine = create_async_engine(connection_string)
 
