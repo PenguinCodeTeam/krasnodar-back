@@ -15,11 +15,6 @@ async def login_handler(request_data: LoginRequest = Body(), service: Authentica
     return LoginResponse(**data)
 
 
-@AUTH_ROUTER.get('/logout')
-async def logout_handler() -> None:
-    return None
-
-
 @AUTH_ROUTER.get('/check_auth', dependencies=[Depends(EmployeeAuthorize())])
 async def check_auth_handler() -> CheckAuthResponse:
     return CheckAuthResponse()

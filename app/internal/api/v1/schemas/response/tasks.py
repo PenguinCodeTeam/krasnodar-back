@@ -7,5 +7,5 @@ class GetTaskResponse(Task):
     pass
 
 
-class GetAllTasksResponse(BaseModel):
+class GetTasksResponse(BaseModel):
     tasks: list[Task]

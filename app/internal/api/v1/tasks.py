@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends
 
 from internal.api.v1.schemas.request.tasks import GetTasksRequest, UpdateTaskRequest
-from internal.api.v1.schemas.response.tasks import GetAllTasksResponse, GetTaskResponse
+from internal.api.v1.schemas.response.tasks import GetTaskResponse, GetTasksResponse
 from internal.core.types import PriorityEnum
 
 
@@ -29,6 +29,6 @@ async def update_task_handler(task_id: UUID, request_data: UpdateTaskRequest) ->
 
 
 @TASKS_ROUTER.get('/')
-async def get_all_tasks_handler(request_data: GetTasksRequest = Depends()) -> GetAllTasksResponse:
+async def get_all_tasks_handler(request_data: GetTasksRequest = Depends()) -> GetTasksResponse:
     """Получение всех задач с фильтрацией по дате и пользователю"""
     pass

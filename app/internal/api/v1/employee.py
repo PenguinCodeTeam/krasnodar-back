@@ -3,14 +3,14 @@ from uuid import UUID
 from fastapi import APIRouter, Body
 
 from internal.api.v1.schemas.request.employee import CreateEmployeeUserRequest, UpdateUserRequest
-from internal.api.v1.schemas.response.employee import GetAllEmployeesResponse, GetEmployeeUserResponse
+from internal.api.v1.schemas.response.employee import GetEmployeeResponse, GetEmployeesResponse
 
 
 EMPLOYEE_ROUTER = APIRouter(prefix='/employee', tags=['Employee'])
 
 
 @EMPLOYEE_ROUTER.get('/')
-async def get_all_employees_handler() -> GetAllEmployeesResponse:
+async def get_all_employees_handler() -> GetEmployeesResponse:
     """Получение всех сотрудников. Для менеджера"""
     pass
 
@@ -22,9 +22,9 @@ async def create_employee_handler(request_data: CreateEmployeeUserRequest = Body
 
 
 @EMPLOYEE_ROUTER.get('/{user_id}')
-async def get_employee_handler(user_id: UUID) -> GetEmployeeUserResponse:
+async def get_employee_handler(user_id: UUID) -> GetEmployeeResponse:
     """Получение инмформации о работнике по id. Для менеджера"""
-    return GetEmployeeUserResponse(name='Дерягин', surname='Никита', patronymic='Владимирович', address='Краснодар, Красная, д. 139', grade='Синьор')
+    return GetEmployeeResponse(name='Дерягин', surname='Никита', patronymic='Владимирович', address='Краснодар, Красная, д. 139', grade='Синьор')
 
 
 @EMPLOYEE_ROUTER.patch('/{user_id}')

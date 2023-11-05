@@ -7,13 +7,9 @@ class GetEmployeeTasksResponse(BaseModel):
     tasks: list[Task]
 
 
-class GetEmployeeInfo(EmployeeUser):
-    pass
-
-
-class GetAllEmployeesResponse(BaseModel):
+class GetEmployeesResponse(BaseModel):
     employees: list[EmployeeUser]
 
 
-class GetEmployeeUserResponse(EmployeeUser):
+class GetEmployeeResponse(EmployeeUser):
     pass
