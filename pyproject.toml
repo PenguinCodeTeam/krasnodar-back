@@ -46,7 +46,7 @@ multi_line_output = 3
 lines_after_imports = 2
 lines_between_sections = 1
 known_local_folder  = ['app']
-known_first_party = ['fastapi', 'starlette', 'pydantic', 'pytest', 'uvicorn', 'httpx']
+known_first_party = ['fastapi', 'starlette', 'pydantic', 'pytest', 'uvicorn', 'httpx', 'sqlalchemy']
 sections = ['FUTURE', 'STDLIB', 'FIRSTPARTY', 'THIRDPARTY', 'LOCALFOLDER']
 
 [tool.poetry.dependencies]
