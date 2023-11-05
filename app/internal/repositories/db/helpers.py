@@ -1,9 +1,5 @@
 import config
-from passlib.context import CryptContext
 from sqlalchemy import URL
-
-
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 
 connection_string = URL.create(

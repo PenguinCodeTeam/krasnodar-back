@@ -26,12 +26,12 @@ class PointRepository(DatabaseRepository):
 
         return res.scalar_one_or_none()
 
-    async def get_points(self) -> list[Point]:
+    async def get_points(self) -> tuple[Point]:
         query = select(Point)
         async with self.transaction() as session:
             res = await session.execute(query)
 
-        return list(res.scalars().all())
+        return res.scalars().all()
 
     async def add_point(
         self,
@@ -84,12 +84,12 @@ class PointRepository(DatabaseRepository):
 
         return res.unique().scalar_one_or_none()
 
-    async def get_workplaces(self) -> list[Workplace]:
+    async def get_workplaces(self) -> tuple[Workplace]:
         query = select(Workplace)
         async with self.transaction() as session:
             res = await session.execute(query)
 
-        return list(res.unique().scalars().all())
+        return res.unique().scalars().all()
 
     async def add_workplace(self, point_id: uuid.UUID) -> Workplace:
         workplace = Workplace(point_id=point_id)
@@ -124,7 +124,7 @@ class PointRepository(DatabaseRepository):
         le_percent_completed_requests: float | Type[Empty] = Empty,
         ge_percent_completed_requests: float | Type[Empty] = Empty,
         point_completed: bool | Type[Empty] = Empty,
-    ) -> list[Workplace]:
+    ) -> tuple[Workplace]:
         filters = []
         if le_created_at is not Empty:
             filters.append(Destination.created_at <= le_created_at)
@@ -153,7 +153,7 @@ class PointRepository(DatabaseRepository):
         async with self.transaction() as session:
             res = await session.execute(query)
 
-        return list(res.unique().scalars().all())
+        return res.unique().scalars().all()
 
     async def add_destination(
         self,
@@ -224,7 +224,7 @@ class PointRepository(DatabaseRepository):
         to_point_id: uuid.UUID | Type[Empty] = Empty,
         le_duration: int | Type[Empty] = Empty,
         ge_duration: int | Type[Empty] = Empty,
-    ) -> list[PointsDuration]:
+    ) -> tuple[PointsDuration]:
         filters = []
         if from_point_id is not Empty:
             filters.append(PointsDuration.from_point_id == from_point_id)
@@ -239,7 +239,7 @@ class PointRepository(DatabaseRepository):
         async with self.transaction() as session:
             res = await session.execute(query)
 
-        return list(res.scalars().all())
+        return res.scalars().all()
 
     async def add_points_duration(self, from_point_id: uuid.UUID, to_point_id: uuid.UUID, duration: int) -> PointsDuration:
         points_duration = PointsDuration(from_point_id=from_point_id, to_point_id=to_point_id, duration=duration)

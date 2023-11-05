@@ -38,7 +38,7 @@ class UserRepository(DatabaseRepository):
 
         return res.scalar_one_or_none()
 
-    async def get_users(self, role: RoleEnum | Type[Empty] = Empty) -> list[User]:
+    async def get_users(self, role: RoleEnum | Type[Empty] = Empty) -> tuple[User]:
         filters = []
         if role is not Empty:
             filters.append(User.role == role)
@@ -47,7 +47,7 @@ class UserRepository(DatabaseRepository):
         async with self.transaction() as session:
             res = await session.execute(query)
 
-        return list(res.scalars().all())
+        return res.scalars().all()
 
     async def add_user(
         self,
@@ -108,7 +108,7 @@ class UserRepository(DatabaseRepository):
         self,
         workplace_id: uuid.UUID | Type[Empty] = Empty,
         grade: WorkerGradeEnum | Type[Empty] = Empty,
-    ) -> list[Worker]:
+    ) -> tuple[Worker]:
         filters = []
         if workplace_id is not Empty:
             filters.append(Worker.workplace_id == workplace_id)
@@ -119,7 +119,7 @@ class UserRepository(DatabaseRepository):
         async with self.transaction() as session:
             res = await session.execute(query)
 
-        return list(res.unique().scalars().all())
+        return res.unique().scalars().all()
 
     async def add_worker(self, user_id: uuid.UUID, workplace_id: uuid.UUID, grade: WorkerGradeEnum) -> Worker:
         worker = Worker(user_id=user_id, workplace_id=workplace_id, grade=grade)
