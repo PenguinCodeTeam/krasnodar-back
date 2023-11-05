@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from internal.core.types import PriorityEnum, RoleEnum, TaskStatusEnum
+from internal.core.types import PriorityEnum, RoleEnum, TaskStatusEnum, WorkerGradeEnum
 
 
 class User(BaseModel):
@@ -17,7 +17,7 @@ class User(BaseModel):
 class EmployeeUser(User):
     role: RoleEnum = RoleEnum.EMPLOYEE
     address: str
-    grade: str
+    grade: WorkerGradeEnum
 
 
 class Point(BaseModel):

@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from internal.api.v1.schemas.common import EmployeeUser
-from internal.core.types import WorkerGradeEnum, RoleEnum
+from internal.core.types import RoleEnum, WorkerGradeEnum
 
 
 class FinishTaskRequest(BaseModel):
@@ -26,4 +26,4 @@ class UpdateUserRequest(BaseModel):
     surname: Optional[str]
     patronymic: Optional[str]
     address: Optional[str]
-    grade: Optional[str]
+    grade: Optional[WorkerGradeEnum]
