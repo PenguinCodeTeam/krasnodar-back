@@ -123,6 +123,7 @@ class PointRepository(DatabaseRepository):
         ge_completed_requests: int | Type[Empty] = Empty,
         le_percent_completed_requests: float | Type[Empty] = Empty,
         ge_percent_completed_requests: float | Type[Empty] = Empty,
+        point_completed: bool | Type[Empty] = Empty,
     ) -> list[Workplace]:
         filters = []
         if le_created_at is not Empty:
@@ -145,8 +146,10 @@ class PointRepository(DatabaseRepository):
             filters.append(Destination.percent_completed_requests <= le_percent_completed_requests)
         if ge_percent_completed_requests is not Empty:
             filters.append(Destination.percent_completed_requests >= ge_percent_completed_requests)
+        if point_completed is not Empty:
+            filters.append(Destination.point_completed == point_completed)
 
-        query = select(Workplace).where(*filter)
+        query = select(Destination).where(*filter)
         async with self.transaction() as session:
             res = await session.execute(query)
 

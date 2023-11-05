@@ -1,8 +1,8 @@
 """init
 
-Revision ID: b67d037b3e14
+Revision ID: 099acb689f76
 Revises:
-Create Date: 2023-11-05 01:47:52.462843
+Create Date: 2023-11-05 09:36:08.798919
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'b67d037b3e14'
+revision: str = '099acb689f76'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -56,6 +56,7 @@ def upgrade() -> None:
         sa.Column('days_after_delivery', sa.Integer(), nullable=False),
         sa.Column('accepted_requests', sa.Integer(), nullable=False),
         sa.Column('completed_requests', sa.Integer(), nullable=False),
+        sa.Column('point_completed', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
             ['point_id'],
             ['points.id'],

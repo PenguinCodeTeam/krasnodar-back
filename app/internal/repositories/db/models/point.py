@@ -25,6 +25,7 @@ class Destination(Base):
     days_after_delivery: Mapped[int]
     accepted_requests: Mapped[int]
     completed_requests: Mapped[int]
+    point_completed: Mapped[bool] = mapped_column(default=False)
 
     @hybrid_property
     def percent_completed_requests(self):
