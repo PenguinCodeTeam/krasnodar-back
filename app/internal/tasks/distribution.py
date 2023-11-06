@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import date, timedelta
 
-from .schemas import GradeTasks, GraphElement, Task
+from .models import GradeTasks, GraphElement, Task
 from app.internal.core.types import PriorityEnum, WorkerGradeEnum
 from app.internal.repositories.db import PointRepository, UserRepository
 from app.internal.repositories.db.models import Point
