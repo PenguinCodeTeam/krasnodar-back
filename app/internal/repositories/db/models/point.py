@@ -1,10 +1,11 @@
 import uuid
 from datetime import date
 
-from internal.repositories.db.models.base import Base
 from sqlalchemy import ForeignKey
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from internal.repositories.db.models.base import Base
 
 
 class Point(Base):
@@ -28,7 +29,9 @@ class Destination(Base):
     point_completed: Mapped[bool] = mapped_column(default=False)
 
     @hybrid_property
-    def percent_completed_requests(self):
+    def percent_completed_requests(self) -> float:
+        if self.accepted_requests == 0:
+            return 100.0
         return self.completed_requests / self.accepted_requests * 100
 
     point: Mapped[Point] = relationship(lazy='joined')
