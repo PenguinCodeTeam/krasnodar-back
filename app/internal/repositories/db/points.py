@@ -2,10 +2,11 @@ import uuid
 from datetime import date
 from typing import Type
 
+from sqlalchemy import select
+
 from internal.core.types import Empty
 from internal.repositories.db.base import DatabaseRepository
 from internal.repositories.db.models import Destination, Point, PointsDuration, Workplace
-from sqlalchemy import select
 
 
 class PointRepository(DatabaseRepository):
@@ -114,6 +115,7 @@ class PointRepository(DatabaseRepository):
     async def get_destinations(
         self,
         le_created_at: date | Type[Empty] = Empty,
+        ge_created_at: date | Type[Empty] = Empty,
         is_delivered: bool | Type[Empty] = Empty,
         le_days_after_delivery: int | Type[Empty] = Empty,
         ge_days_after_delivery: int | Type[Empty] = Empty,
@@ -122,12 +124,16 @@ class PointRepository(DatabaseRepository):
         le_completed_requests: int | Type[Empty] = Empty,
         ge_completed_requests: int | Type[Empty] = Empty,
         le_percent_completed_requests: float | Type[Empty] = Empty,
+        lt_percent_completed_requests: float | Type[Empty] = Empty,
         ge_percent_completed_requests: float | Type[Empty] = Empty,
+        gt_percent_completed_requests: float | Type[Empty] = Empty,
         point_completed: bool | Type[Empty] = Empty,
-    ) -> tuple[Workplace]:
+    ) -> tuple[Destination]:
         filters = []
         if le_created_at is not Empty:
             filters.append(Destination.created_at <= le_created_at)
+        if ge_created_at is not Empty:
+            filters.append(Destination.created_at >= ge_created_at)
         if is_delivered is not Empty:
             filters.append(Destination.is_delivered == is_delivered)
         if le_days_after_delivery is not Empty:
@@ -144,8 +150,12 @@ class PointRepository(DatabaseRepository):
             filters.append(Destination.completed_requests >= ge_completed_requests)
         if le_percent_completed_requests is not Empty:
             filters.append(Destination.percent_completed_requests <= le_percent_completed_requests)
+        if lt_percent_completed_requests is not Empty:
+            filters.append(Destination.percent_completed_requests < lt_percent_completed_requests)
         if ge_percent_completed_requests is not Empty:
             filters.append(Destination.percent_completed_requests >= ge_percent_completed_requests)
+        if gt_percent_completed_requests is not Empty:
+            filters.append(Destination.percent_completed_requests > gt_percent_completed_requests)
         if point_completed is not Empty:
             filters.append(Destination.point_completed == point_completed)
 
