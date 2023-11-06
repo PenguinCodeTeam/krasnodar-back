@@ -1,10 +1,11 @@
 from uuid import UUID
 
 from fastapi.exceptions import HTTPException
+from sqlalchemy.exc import IntegrityError
 
 from internal.core.types import RoleEnum, WorkerGradeEnum
+from internal.repositories.db.models.user import User, Worker
 from internal.repositories.db.users import UserRepository
-from sqlalchemy.exc import IntegrityError
 
 
 class UserService:
@@ -13,66 +14,38 @@ class UserService:
 
     async def create_manager(self, login: str, password: str, name: str, surname: str, patronymic: str) -> UUID:
         try:
-            user = await self.repository.add_user(login, password, name, surname, patronymic, RoleEnum.MANAGER)
+            user = await self.repository.add_user(login=login, password=password, name=name, surname=surname, patronymic=patronymic, role=RoleEnum.MANAGER)
         except IntegrityError as e:
             raise HTTPException(status_code=409, detail='User already exists') from e
         return user.id
 
     async def create_employee(self, login: str, password: str, name: str, surname: str, patronymic: str, workplace_id: UUID, grade: WorkerGradeEnum) -> UUID:
         try:
-            user = await self.repository.add_user(login, password, name, surname, patronymic, RoleEnum.EMPLOYEE)
+            user = await self.repository.add_user(login=login, password=password, name=name, surname=surname, patronymic=patronymic, role=RoleEnum.EMPLOYEE)
         except IntegrityError as e:
             raise HTTPException(status_code=409, detail='User already exists') from e
 
         try:
-            employee = await self.repository.add_worker(user.id, workplace_id, grade)
+            employee = await self.repository.add_worker(user_id=user.id, workplace_id=workplace_id, grade=grade)
         except IntegrityError as e:
-            raise HTTPException(status_code=409, detail='Employee already exists') from e
+            raise HTTPException(status_code=409, detail='Employee already exists or workplace is invalid') from e
 
         return employee.user_id
 
     async def get_employees(self) -> list:
         employees = await self.repository.get_workers()
-        data = []
-        for worker in employees:
-            user = worker.user
-            data.append(
-                {
-                    'id': user.id,
-                    'address': worker.workplace.point.address,
-                    'login': user.login,
-                    'name': user.name,
-                    'surname': user.surname,
-                    'patronymic': user.patronymic,
-                    'role': user.role,
-                }
-            )
-        return data
+        return [form_employee_response(worker) for worker in employees]
 
     async def get_employee(self, user_id: UUID) -> dict:
         worker = await self.repository.get_worker(user_id=user_id)
         if not worker:
             raise HTTPException(status_code=404, detail='Employee not found')
 
-        user = worker.user
-
-        result = {
-            'id': user_id,
-            'address': worker.workplace.point.address,
-            'login': user.login,
-            'name': user.name,
-            'surname': user.surname,
-            'patronymic': user.patronymic,
-            'role': user.role,
-        }
-        return result
+        return form_employee_response(worker)
 
     async def get_managers(self) -> list:
         users = await self.repository.get_users(role=RoleEnum.MANAGER)
-        result = []
-        for user in users:
-            result.append({'id': user.id, 'login': user.login, 'name': user.name, 'surname': user.surname, 'patronymic': user.patronymic, 'role': user.role})
-        return result
+        return [form_manager_response(manager) for manager in users]
 
     async def get_manager(self, user_id: UUID) -> dict:
         user = await self.repository.get_user(user_id=user_id)
@@ -81,5 +54,21 @@ class UserService:
         if user.role != RoleEnum.MANAGER:
             raise HTTPException(status_code=403, detail='User is not manager')
 
-        result = {'id': user_id, 'login': user.login, 'name': user.name, 'surname': user.surname, 'patronymic': user.patronymic, 'role': user.role}
-        return result
+        return form_manager_response(user)
+
+
+def form_employee_response(worker: Worker):
+    user: User = worker.user
+    return {
+        'id': user.id,
+        'address': worker.workplace.point.address,
+        'login': user.login,
+        'name': user.name,
+        'surname': user.surname,
+        'patronymic': user.patronymic,
+        'role': user.role,
+    }
+
+
+def form_manager_response(manager: User):
+    return {'id': manager.id, 'login': manager.login, 'name': manager.name, 'surname': manager.surname, 'patronymic': manager.patronymic, 'role': manager.role}

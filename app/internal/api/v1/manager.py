@@ -52,8 +52,8 @@ async def get_managers_handler(service: UserService = Depends()) -> GetManagersR
 @MANAGER_ROUTER.post('/', tags=['Working'])
 async def create_manager_handler(request_data: CreateManagerRequest, service: UserService = Depends()) -> CreateManagerResponse:
     """Создание нового менеджера"""
-    data = await service.create_manager(**request_data.model_dump())
-    return CreateManagerResponse(id=data)
+    created_manager_id = await service.create_manager(**request_data.model_dump())
+    return CreateManagerResponse(id=created_manager_id)
 
 
 @MANAGER_ROUTER.patch('/{user_id}')
