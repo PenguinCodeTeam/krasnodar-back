@@ -4,6 +4,7 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from internal.core.types import RoleEnum, WorkerGradeEnum
+from internal.repositories.db.models.point import Point
 from internal.repositories.db.models.user import User, Worker
 from internal.repositories.db.users import UserRepository
 
@@ -59,9 +60,10 @@ class UserService:
 
 def form_employee_response(worker: Worker):
     user: User = worker.user
+    workplace_point: Point = worker.workplace.point
     return {
         'id': user.id,
-        'address': worker.workplace.point.address,
+        'workplace': {'latitude': workplace_point.latitude, 'longitude': workplace_point.longitude, 'address': workplace_point.address},
         'login': user.login,
         'name': user.name,
         'surname': user.surname,

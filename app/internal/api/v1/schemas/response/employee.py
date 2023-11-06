@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from internal.api.v1.schemas.common import IdModel, Task
+from internal.api.v1.schemas.common import IdModel, Point, Task
 from internal.core.types import RoleEnum
 
 
@@ -9,7 +9,7 @@ class GetEmployeeTasksResponse(BaseModel):
 
 
 class GetEmployeeResponse(IdModel):
-    address: str
+    workplace: Point
     login: str
     name: str
     surname: str
