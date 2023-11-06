@@ -3,6 +3,7 @@ import os
 
 APP_URL_PREFIX = ''
 APP_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__) or '.'))
+DEV = False
 DEBUG = False
 INSTANCE_ID = os.environ.get('INSTANCE_ID') or os.environ.get('HOSTNAME') or ''
 SERVER_HOST = '0.0.0.0'

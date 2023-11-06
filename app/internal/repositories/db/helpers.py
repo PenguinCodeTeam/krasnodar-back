@@ -1,5 +1,6 @@
-import config
 from sqlalchemy import URL
+
+import config
 
 
 connection_string = URL.create(

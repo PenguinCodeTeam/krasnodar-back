@@ -39,15 +39,15 @@ class PointRepository(DatabaseRepository):
         latitude: float,
         longitude: float,
     ) -> Point:
-        user = Point(
+        point = Point(
             address=address,
             latitude=latitude,
             longitude=longitude,
         )
         async with self.transaction() as session:
-            session.add(user)
+            session.add(point)
 
-        return user
+        return point
 
     async def update_point(
         self,

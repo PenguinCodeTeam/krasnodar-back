@@ -11,7 +11,7 @@ class Point(Base):
     __tablename__ = 'points'
 
     id: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4, primary_key=True, unique=True)
-    address: Mapped[str] = mapped_column(primary_key=True)
+    address: Mapped[str] = mapped_column(unique=True)
     latitude: Mapped[float]
     longitude: Mapped[float]
 

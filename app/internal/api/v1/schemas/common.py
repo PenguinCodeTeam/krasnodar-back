@@ -3,21 +3,11 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from internal.core.types import PriorityEnum, RoleEnum, TaskStatusEnum, WorkerGradeEnum
+from internal.core.types import PriorityEnum, TaskStatusEnum
 
 
-class User(BaseModel):
-    login: str
-    role: RoleEnum
-    name: str
-    surname: str
-    patronymic: str
-
-
-class EmployeeUser(User):
-    role: RoleEnum = RoleEnum.EMPLOYEE
-    address: str
-    grade: WorkerGradeEnum
+class IdModel(BaseModel):
+    id: UUID
 
 
 class Point(BaseModel):

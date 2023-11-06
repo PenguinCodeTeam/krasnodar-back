@@ -1,4 +1,5 @@
 import datetime
+from uuid import UUID
 
 import config
 import jwt
@@ -6,8 +7,8 @@ from internal.core.exceptions import ExpiredTokenException, InvalidTokenExceptio
 from internal.services.authentication.helpers import form_token_due_date_lifetime
 
 
-def encode_jwt(login: str, raw_token_lifetime=config.JWT_LIFETIME):
-    payload = {'login': login, 'expiration': form_token_due_date_lifetime(raw_token_lifetime).strftime(config.JWT_EXP_DATE_FORMAT)}
+def encode_jwt(user_id: UUID, raw_token_lifetime=config.JWT_LIFETIME) -> str:
+    payload = {'user_id': str(user_id), 'expiration': form_token_due_date_lifetime(raw_token_lifetime).strftime(config.JWT_EXP_DATE_FORMAT)}
     return jwt.encode(payload, key=config.JWT_SECRET, algorithm=config.JWT_ALGORITHM)
 
 

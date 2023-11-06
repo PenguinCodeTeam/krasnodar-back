@@ -14,7 +14,7 @@ def main():
         host=config.SERVER_HOST,
         port=config.SERVER_PORT,
         log_config=LOGGING,
-        reload=config.DEBUG,
+        reload=config.DEV,
         workers=cpu_count(),
     )
 

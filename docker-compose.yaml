@@ -10,8 +10,6 @@ services:
     environment:
       POSTGRES_PASSWORD: pass
       POSTGRES_USER: user
-      POSTGRES_DB: hih
-    volumes:
-      - postgres-db:/var/lib/postgresql/data
+      POSTGRES_DB: db
 volumes:
   postgres-db:

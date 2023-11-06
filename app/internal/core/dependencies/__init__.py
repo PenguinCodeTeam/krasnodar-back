@@ -1,1 +1,1 @@
-from internal.core.dependencies.authentication import EmployeeAuthorize, ManagerAuthorize
+from internal.core.dependencies.authorization import EmployeeAuthorize, ManagerAuthorize, OnlyCurrentEmployeeAuthorize

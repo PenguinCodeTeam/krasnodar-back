@@ -1,5 +1,6 @@
-from internal.repositories.db.helpers import connection_string
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from internal.repositories.db.helpers import connection_string
 
 
 _engine = create_async_engine(connection_string)

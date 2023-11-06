@@ -46,7 +46,7 @@ multi_line_output = 3
 lines_after_imports = 2
 lines_between_sections = 1
 known_local_folder  = ['app']
-known_first_party = ['fastapi', 'starlette', 'pydantic', 'pytest', 'uvicorn', 'httpx']
+known_first_party = ['fastapi', 'starlette', 'pydantic', 'pytest', 'uvicorn', 'httpx', 'sqlalchemy']
 sections = ['FUTURE', 'STDLIB', 'FIRSTPARTY', 'THIRDPARTY', 'LOCALFOLDER']
 
 [tool.poetry.dependencies]
@@ -59,6 +59,9 @@ gunicorn = "~21.2.0"
 pyjwt = "^2.8.0"
 alembic = "^1.12.1"
 greenlet = "^3.0.1"
+bcrypt = "^4.0.1"
+passlib = "^1.7.4"
+asyncpg = "^0.29.0"
 
 [tool.poetry.group.test]
 optional=true

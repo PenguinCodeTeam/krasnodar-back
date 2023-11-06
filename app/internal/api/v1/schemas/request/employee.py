@@ -1,8 +1,8 @@
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
-from internal.api.v1.schemas.common import EmployeeUser
 from internal.core.types import RoleEnum, WorkerGradeEnum
 
 
@@ -14,8 +14,14 @@ class GetEmployeeRequest(BaseModel):
     grade: WorkerGradeEnum
 
 
-class CreateEmployeeUserRequest(EmployeeUser):
+class CreateEmployeeUserRequest(BaseModel):
+    login: str
     password: str
+    name: str
+    surname: str
+    patronymic: str
+    workplace_id: UUID
+    grade: WorkerGradeEnum
 
 
 class UpdateUserRequest(BaseModel):
