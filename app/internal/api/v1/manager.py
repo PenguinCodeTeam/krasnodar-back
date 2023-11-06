@@ -57,6 +57,12 @@ async def create_manager_handler(request_data: CreateManagerRequest, service: Us
 
 
 @MANAGER_ROUTER.patch('/{user_id}')
-async def update_manager_handler(user_id: UUID, request_data: UpdateManagerRequest) -> None:
+async def update_manager_handler(user_id: UUID, request_data: UpdateManagerRequest, service: UserService = Depends()) -> None:
     """Изменение информации о менеджере"""
-    return None
+    await service.update_manager(user_id, **request_data.model_dump())
+
+
+@MANAGER_ROUTER.delete('/user_id')
+async def delete_manager_handler(user_id: UUID, service: UserService = Depends()) -> None:
+    """Удаление менеджера"""
+    await service.delete_manager(user_id)

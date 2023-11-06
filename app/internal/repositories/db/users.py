@@ -1,11 +1,12 @@
 import uuid
 from typing import Type
 
+from sqlalchemy import select
+
 from internal.core.types import Empty, RoleEnum, WorkerGradeEnum
 from internal.core.utils import hash_password
 from internal.repositories.db.base import DatabaseRepository
 from internal.repositories.db.models import User, Worker
-from sqlalchemy import select
 
 
 class UserRepository(DatabaseRepository):
@@ -91,11 +92,9 @@ class UserRepository(DatabaseRepository):
 
         return user
 
-    async def delete_user(self, user: User) -> User:
+    async def delete_user(self, user: User):
         async with self.transaction() as session:
-            session.delete(user)
-
-        return user
+            await session.delete(user)
 
     async def get_worker(self, user_id: uuid.UUID) -> Worker | None:
         query = select(Worker).where(Worker.user_id == user_id)
@@ -144,8 +143,6 @@ class UserRepository(DatabaseRepository):
 
         return worker
 
-    async def delete_worker(self, worker: Worker) -> Worker:
+    async def delete_worker(self, worker: Worker):
         async with self.transaction() as session:
-            session.delete(worker)
-
-        return worker
+            await session.delete(worker)

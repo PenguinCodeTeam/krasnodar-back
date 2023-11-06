@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends
 
-from internal.api.v1.schemas.request.employee import CreateEmployeeUserRequest, UpdateUserRequest
+from internal.api.v1.schemas.request.employee import CreateEmployeeUserRequest, UpdateEmployeeRequest
 from internal.api.v1.schemas.response.employee import CreateEmployeeResponse, GetEmployeeResponse, GetEmployeesResponse
 from internal.core.dependencies.authorization import ManagerAuthorize, OnlyCurrentEmployeeAuthorize
 from internal.services.user import UserService
@@ -33,6 +33,12 @@ async def get_employee_handler(user_id: UUID, service: UserService = Depends()) 
 
 
 @EMPLOYEE_ROUTER.patch('/{user_id}', dependencies=[Depends(ManagerAuthorize())])
-async def update_employee_handler(user_id: UUID, request_data: UpdateUserRequest = Body()):
+async def update_employee_handler(user_id: UUID, request_data: UpdateEmployeeRequest = Body(), service: UserService = Depends()):
     """Обновление профиля работнике. Для менеджера"""
-    return None
+    await service.update_employee(user_id, **request_data.model_dump())
+
+
+@EMPLOYEE_ROUTER.delete('/{user_id}', dependencies=[Depends(ManagerAuthorize())])
+async def delete_employee_handler(user_id: UUID, service: UserService = Depends()):
+    """Удаление пролфиля работника. Для менеджера"""
+    await service.delete_employee(user_id)
