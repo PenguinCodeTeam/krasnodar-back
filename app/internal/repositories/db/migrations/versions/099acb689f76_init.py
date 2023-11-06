@@ -2,12 +2,13 @@
 
 Revision ID: 099acb689f76
 Revises:
-Create Date: 2023-11-05 09:36:08.798919
+Create Date: 2023-11-06 18:49:31.039449
 
 """
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 
@@ -26,7 +27,8 @@ def upgrade() -> None:
         sa.Column('address', sa.String(), nullable=False),
         sa.Column('latitude', sa.Float(), nullable=False),
         sa.Column('longitude', sa.Float(), nullable=False),
-        sa.PrimaryKeyConstraint('id', 'address'),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('address'),
         sa.UniqueConstraint('id'),
     )
     op.create_table(
@@ -45,8 +47,9 @@ def upgrade() -> None:
         sa.Column('surname', sa.String(), nullable=False),
         sa.Column('patronymic', sa.String(), nullable=False),
         sa.Column('role', sa.Enum('MANAGER', 'EMPLOYEE', name='roleenum'), nullable=False),
-        sa.PrimaryKeyConstraint('id', 'login'),
+        sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
+        sa.UniqueConstraint('login'),
     )
     op.create_table(
         'destinations',
