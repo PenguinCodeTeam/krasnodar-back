@@ -25,10 +25,9 @@ def upgrade() -> None:
         'points',
         sa.Column('id', sa.Uuid(), nullable=False),
         sa.Column('address', sa.String(), nullable=False),
-        sa.Column('latitude', sa.Float(), nullable=False),
-        sa.Column('longitude', sa.Float(), nullable=False),
+        sa.Column('city', sa.String(), nullable=False),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('address'),
+        sa.UniqueConstraint('address', 'city'),
         sa.UniqueConstraint('id'),
     )
     op.create_table(

@@ -15,11 +15,9 @@ class PointService:
         self.point_repository = PointRepository()
         self.yandex_geocoder_repository = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
 
-    async def add_workplace(self, address: str) -> UUID:
-        coordinates = await self.yandex_geocoder_repository.get_coordinates(city='Краснодар', address=address)
-
+    async def add_workplace(self, address: str, city: str) -> UUID:
         try:
-            point = await self.point_repository.add_point(address=address, latitude=coordinates[0], longitude=coordinates[1])
+            point = await self.repository.add_point(address=address, city=city)
         except IntegrityError as e:
             raise HTTPException(status_code=409, detail='Point already exists') from e
 
@@ -43,10 +41,5 @@ class PointService:
 
 
 def form_point_response(point: Point):
-    response = {
-        'id': point.id,
-        'address': point.address,
-        'latitude': point.latitude,
-        'longitude': point.longitude,
-    }
+    response = {'id': point.id, 'address': point.address, 'city': point.city}
     return response

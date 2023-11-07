@@ -1,16 +1,14 @@
 from pydantic import BaseModel
 
-from internal.api.v1.schemas.common import IdModel
+from internal.api.v1.schemas.common import IdModel, Point
 
 
 class CreateWorkplaceResponse(IdModel):
     pass
 
 
-class GetPlaceResponse(IdModel):
-    address: str
-    latitude: float
-    longitude: float
+class GetPlaceResponse(Point):
+    pass
 
 
 class GetWorkplacesResponse(BaseModel):
