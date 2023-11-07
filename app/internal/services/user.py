@@ -1,3 +1,4 @@
+from typing import Type
 from uuid import UUID
 
 from fastapi.exceptions import HTTPException
@@ -60,13 +61,13 @@ class UserService:
     async def update_employee(
         self,
         user_id: UUID,
-        login: str = Empty,
-        password: str = Empty,
-        name: str = Empty,
-        surname: str = Empty,
-        patronymic: str = Empty,
-        workplace_id: UUID = Empty,
-        grade: WorkerGradeEnum = Empty,
+        login: str | Type[Empty] = Empty,
+        password: str | Type[Empty] = Empty,
+        name: str | Type[Empty] = Empty,
+        surname: str | Type[Empty] = Empty,
+        patronymic: str | Type[Empty] = Empty,
+        workplace_id: UUID | Type[Empty] = Empty,
+        grade: WorkerGradeEnum | Type[Empty] = Empty,
     ):
         worker = await self.repository.get_worker(user_id=user_id)
         if not worker:
@@ -78,7 +79,15 @@ class UserService:
         except IntegrityError as e:
             raise HTTPException(status_code=409, detail='Unable to update user') from e
 
-    async def update_manager(self, user_id: UUID, login: str = Empty, password: str = Empty, name: str = Empty, surname: str = Empty, patronymic: str = Empty):
+    async def update_manager(
+        self,
+        user_id: UUID,
+        login: str | Type[Empty] = Empty,
+        password: str | Type[Empty] = Empty,
+        name: str | Type[Empty] = Empty,
+        surname: str | Type[Empty] = Empty,
+        patronymic: str | Type[Empty] = Empty,
+    ):
         user = await self.repository.get_user(user_id)
         if not user:
             raise HTTPException(status_code=404, detail='User not found')

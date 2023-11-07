@@ -1,9 +1,8 @@
-from typing import Optional, Type
+from typing import Optional
 
 from pydantic import BaseModel
 
 from internal.api.v1.schemas.common import InputDataRow
-from internal.core.types import Empty
 
 
 class OptionalInputDataRow(BaseModel):
@@ -32,8 +31,8 @@ class CreateManagerRequest(BaseModel):
 
 
 class UpdateManagerRequest(BaseModel):
-    login: Optional[str | Type] = Empty
-    password: Optional[str | Type] = Empty
-    name: Optional[str | Type] = Empty
-    surname: Optional[str | Type] = Empty
-    patronymic: Optional[str | Type] = Empty
+    login: str = None
+    password: str = None
+    name: str = None
+    surname: str = None
+    patronymic: str = None

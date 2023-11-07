@@ -21,8 +21,8 @@ async def get_all_employees_handler(service: UserService = Depends()) -> GetEmpl
 @EMPLOYEE_ROUTER.post('/', dependencies=[Depends(ManagerAuthorize())])
 async def create_employee_handler(request_data: CreateEmployeeUserRequest = Body(), service: UserService = Depends()) -> CreateEmployeeResponse:
     """Создание профиля работника. Для менеджера"""
-    data = await service.create_employee(**request_data.model_dump())
-    return CreateEmployeeResponse(id=data)
+    user_id = await service.create_employee(**request_data.model_dump())
+    return CreateEmployeeResponse(id=user_id)
 
 
 @EMPLOYEE_ROUTER.get('/{user_id}', dependencies=[Depends(OnlyCurrentEmployeeAuthorize())])
@@ -35,7 +35,7 @@ async def get_employee_handler(user_id: UUID, service: UserService = Depends()) 
 @EMPLOYEE_ROUTER.patch('/{user_id}', dependencies=[Depends(ManagerAuthorize())])
 async def update_employee_handler(user_id: UUID, request_data: UpdateEmployeeRequest = Body(), service: UserService = Depends()):
     """Обновление профиля работнике. Для менеджера"""
-    await service.update_employee(user_id, **request_data.model_dump())
+    await service.update_employee(user_id, **request_data.model_dump(exclude_none=True))
 
 
 @EMPLOYEE_ROUTER.delete('/{user_id}', dependencies=[Depends(ManagerAuthorize())])

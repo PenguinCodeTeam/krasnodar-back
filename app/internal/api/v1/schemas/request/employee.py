@@ -1,9 +1,8 @@
-from typing import Optional, Type
 from uuid import UUID
 
 from pydantic import BaseModel
 
-from internal.core.types import Empty, WorkerGradeEnum
+from internal.core.types import WorkerGradeEnum
 
 
 class FinishTaskRequest(BaseModel):
@@ -25,10 +24,10 @@ class CreateEmployeeUserRequest(BaseModel):
 
 
 class UpdateEmployeeRequest(BaseModel):
-    login: Optional[str | Type] = Empty
-    password: Optional[str | Type] = Empty
-    name: Optional[str | Type] = Empty
-    surname: Optional[str | Type] = Empty
-    patronymic: Optional[str | Type] = Empty
-    workplace_id: Optional[UUID | Type] = Empty
-    grade: Optional[WorkerGradeEnum | Type] = Empty
+    login: str = None
+    password: str = None
+    name: str = None
+    surname: str = None
+    patronymic: str = None
+    workplace_id: UUID = None
+    grade: WorkerGradeEnum = None
