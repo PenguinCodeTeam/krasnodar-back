@@ -1,51 +1,59 @@
+import asyncio
 from collections import defaultdict
 from datetime import date, timedelta
 
-from internal.core.types import PriorityEnum, WorkerGradeEnum
-from internal.repositories.db import PointRepository, UserRepository
+from internal.core.types import WorkerGradeEnum
+from internal.repositories.db import PointRepository, TaskRepository, UserRepository
 from internal.tasks.models import GradeTasks, GraphElement, Point, Task
 from internal.tasks.worker import celery
 
 
 MAX_WORKING_MINUTES = 8 * 60
-SENIOR_TASKS_DURATION_MINUTES = 4 * 60
-MIDDLE_TASKS_DURATION_MINUTES = 2 * 60
-JUNIOR_TASKS_DURATION_MINUTES = 90
 
 
-def generate_tasks() -> GradeTasks:
+async def generate_tasks() -> GradeTasks:
     point_repository = PointRepository()
-    senior_points_statement_1 = point_repository.get_destinations(le_days_after_delivery=8, lt_percent_completed_requests=100, point_completed=False)
-    senior_points_statement_2 = point_repository.get_destinations(le_days_after_delivery=15, point_completed=False)
+    task_repository = TaskRepository()
+    senior_task = await task_repository.get_task(name='Выезд на точку для стимулирования выдач')
+    middle_task = await task_repository.get_task(name='Обучение агента')
+    junior_task = await task_repository.get_task(name='Доставка карт и материалов')
+    senior_points_statement_1 = await point_repository.get_destinations(le_days_after_delivery=8, lt_percent_completed_requests=100, point_completed=False)
+    senior_points_statement_2 = await point_repository.get_destinations(le_days_after_delivery=15, point_completed=False)
     senior_points = list(set().union(senior_points_statement_1, senior_points_statement_2))
 
-    middle_points = point_repository.get_destinations(lt_percent_completed_requests=50, point_completed=False)
+    middle_points = await point_repository.get_destinations(lt_percent_completed_requests=50, point_completed=False)
 
-    junior_points_statement_1 = point_repository.get_destinations(ge_created_at=date.today() - timedelta(days=1), point_completed=False)
-    junior_points_statement_2 = point_repository.get_destinations(is_delivered=False, point_completed=False)
+    junior_points_statement_1 = await point_repository.get_destinations(ge_created_at=date.today() - timedelta(days=1), point_completed=False)
+    junior_points_statement_2 = await point_repository.get_destinations(is_delivered=False, point_completed=False)
     junior_points = list(set().union(junior_points_statement_1, junior_points_statement_2))
 
     senior_tasks = [
         Task(
             point=Point.model_validate(point.point),
-            priority=PriorityEnum.HIGH,
-            duration_work=SENIOR_TASKS_DURATION_MINUTES,
+            task_id=senior_task.id,
+            name=senior_task.name,
+            priority=senior_task.priority,
+            duration_work=senior_task.duration,
         )
         for point in senior_points
     ]
     middle_tasks = [
         Task(
             point=Point.model_validate(point.point),
-            priority=PriorityEnum.MIDDLE,
-            duration_work=MIDDLE_TASKS_DURATION_MINUTES,
+            task_id=middle_task.id,
+            name=middle_task.name,
+            priority=middle_task.priority,
+            duration_work=middle_task.duration,
         )
         for point in middle_points
     ]
     junior_tasks = [
         Task(
             point=Point.model_validate(point.point),
-            priority=PriorityEnum.LOW,
-            duration_work=JUNIOR_TASKS_DURATION_MINUTES,
+            task_id=junior_task.id,
+            name=junior_task.name,
+            priority=junior_task.priority,
+            duration_work=junior_task.duration,
         )
         for point in junior_points
     ]
@@ -57,16 +65,16 @@ def generate_tasks() -> GradeTasks:
     )
 
 
-def generate_graph(tasks: GradeTasks) -> dict:
+async def generate_graph(tasks: GradeTasks) -> dict:
     point_repository = PointRepository()
     graph = defaultdict(dict)
     all_tasks = tasks.senior + tasks.middle + tasks.junior
-    workplaces = point_repository.get_workplaces()
+    workplaces = await point_repository.get_workplaces()
 
     for workplace in workplaces:
         for task in all_tasks:
             graph[workplace.point.id][task.point.id] = GraphElement(
-                duration=point_repository.get_points_duration(workplace.point.id, task.point.id),
+                duration=await point_repository.get_points_duration(workplace.point.id, task.point.id),
                 task=task,
             )
 
@@ -74,7 +82,7 @@ def generate_graph(tasks: GradeTasks) -> dict:
         for to_task in all_tasks:
             if from_task is not to_task:
                 graph[from_task.point.id][to_task.point.id] = GraphElement(
-                    duration=point_repository.get_points_duration(from_task.point.id, to_task.point.id),
+                    duration=await point_repository.get_points_duration(from_task.point.id, to_task.point.id),
                     task=to_task,
                 )
 
@@ -125,22 +133,23 @@ def get_best_route(
     return route
 
 
-def save_tasks_by_workers(distributed_tasks_by_workers: dict):
-    # TODO: Add models in database and realize save
-    return None
+async def save_tasks_by_workers(distributed_tasks_by_workers: dict):
+    task_repository = TaskRepository()
+    for user_id, tasks in distributed_tasks_by_workers.items():
+        await task_repository.add_schedule_tasks(user_id=user_id, tasks=tasks)
 
 
 @celery.task(name='tasks_distribution')
 def tasks_distribution():
     point_repository = UserRepository()
-    tasks_by_grade = generate_tasks()
-    graph = generate_graph()
+    tasks_by_grade = asyncio.run(generate_tasks())
+    graph = asyncio.run(generate_graph())
     tasks_for_grade = {
         grade: get_available_tasks(grade=grade, tasks=tasks_by_grade) for grade in [WorkerGradeEnum.SENIOR, WorkerGradeEnum.MIDDLE, WorkerGradeEnum.JUNIOR]
     }
 
     distributed_tasks_by_workers = {}
-    workers = point_repository.get_workers()
+    workers = asyncio.run(point_repository.get_workers())
     workers_by_grade = defaultdict(list)
     for worker in workers:
         workers_by_grade[worker.grade].append(worker)
@@ -155,4 +164,4 @@ def tasks_distribution():
             )
             used_tasks.union(distributed_tasks_by_workers[worker.id])
 
-    save_tasks_by_workers(distributed_tasks_by_workers)
+    asyncio.run(save_tasks_by_workers(distributed_tasks_by_workers))
