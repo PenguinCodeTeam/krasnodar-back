@@ -159,7 +159,7 @@ class PointRepository(DatabaseRepository):
         if point_completed is not Empty:
             filters.append(Destination.point_completed == point_completed)
 
-        query = select(Destination).where(*filter)
+        query = select(Destination).where(*filters)
         async with self.transaction() as session:
             res = await session.execute(query)
 
