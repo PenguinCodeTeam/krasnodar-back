@@ -104,11 +104,11 @@ def upgrade() -> None:
     )
     op.create_table(
         'schedule_tasks',
-        sa.Column('id', sa.Uuid(), nullable=False),
-        sa.Column('worker_id', sa.Uuid(), nullable=False),
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('user_id', sa.Uuid(), nullable=False),
         sa.Column('task_id', sa.Uuid(), nullable=False),
-        sa.Column('working_date', sa.Date(), nullable=False),
-        sa.Column('number_task', sa.Integer(), nullable=False),
+        sa.Column('date', sa.Date(), nullable=False),
+        sa.Column('task_number', sa.Integer(), nullable=False),
         sa.Column('point_id', sa.Uuid(), nullable=False),
         sa.ForeignKeyConstraint(
             ['point_id'],
