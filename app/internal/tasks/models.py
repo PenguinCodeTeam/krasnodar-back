@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from app.internal.core.types import PriorityEnum
+from internal.core.types import PriorityEnum
 
 
 class Point(BaseModel):

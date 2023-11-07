@@ -1,11 +1,13 @@
 from celery import Celery
 from celery.result import AsyncResult
-from config import REDIS_HOST, REDIS_PORT
+from config import REDIS_DB, REDIS_HOST, REDIS_PORT
 
+
+REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
 
 celery = Celery(__name__)
-celery.conf.broker_url = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
-celery.conf.result_backend = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
+celery.conf.broker_url = REDIS_URL
+celery.conf.result_backend = REDIS_URL
 
 
 def get_last_task_id_by_name(task_name: str):

@@ -1,10 +1,10 @@
 from collections import defaultdict
 from datetime import date, timedelta
 
-from .models import GradeTasks, GraphElement, Point, Task
-from .worker import celery
-from app.internal.core.types import PriorityEnum, WorkerGradeEnum
-from app.internal.repositories.db import PointRepository, UserRepository
+from internal.core.types import PriorityEnum, WorkerGradeEnum
+from internal.repositories.db import PointRepository, UserRepository
+from internal.tasks.models import GradeTasks, GraphElement, Point, Task
+from internal.tasks.worker import celery
 
 
 MAX_WORKING_MINUTES = 8 * 60
@@ -130,8 +130,8 @@ def save_tasks_by_workers(distributed_tasks_by_workers: dict):
     return None
 
 
-@celery.task(name='distribution_tasks')
-def distribution_tasks():
+@celery.task(name='tasks_distribution')
+def tasks_distribution():
     point_repository = UserRepository()
     tasks_by_grade = generate_tasks()
     graph = generate_graph()
