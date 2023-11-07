@@ -1,7 +1,15 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 from app.internal.core.types import PriorityEnum
-from app.internal.repositories.db.models import Point
+
+
+class Point(BaseModel):
+    id: UUID
+    address: str
+    latitude: float
+    longitude: float
 
 
 class Task(BaseModel):

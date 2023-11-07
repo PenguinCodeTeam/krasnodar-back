@@ -20,5 +20,3 @@ RUN poetry install
 WORKDIR /project
 
 EXPOSE 8000
-CMD ["bash", "-c", "sleep 5 && cd /project && poetry run alembic upgrade head && poetry run python3 app/main.py"]
-
