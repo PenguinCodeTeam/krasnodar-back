@@ -14,6 +14,8 @@ class Point(BaseModel):
 
 class Task(BaseModel):
     point: Point
+    task_id: UUID
+    name: str
     priority: PriorityEnum
     duration_work: int
 
