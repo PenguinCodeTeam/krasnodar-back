@@ -10,7 +10,7 @@ from internal.core.types import PriorityEnum
 TASKS_ROUTER = APIRouter(prefix='/tasks', tags=['Tasks'])
 
 
-@TASKS_ROUTER.get('/{task_id}')
+@TASKS_ROUTER.get('/{task_id}', tags=['Not working'])
 async def get_task_handler(task_id: UUID) -> GetTaskResponse:
     """Получение задачи по id"""
     return GetTaskResponse(
@@ -22,13 +22,13 @@ async def get_task_handler(task_id: UUID) -> GetTaskResponse:
     )
 
 
-@TASKS_ROUTER.put('/{task_id}')
+@TASKS_ROUTER.put('/{task_id}', tags=['Not working'])
 async def update_task_handler(task_id: UUID, request_data: UpdateTaskRequest) -> None:
     """Изменение задачи"""
     pass
 
 
-@TASKS_ROUTER.get('/')
+@TASKS_ROUTER.get('/', tags=['Not working'])
 async def get_all_tasks_handler(request_data: GetTasksRequest = Depends()) -> GetTasksResponse:
     """Получение всех задач с фильтрацией по дате и пользователю"""
     pass

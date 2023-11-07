@@ -11,45 +11,45 @@ from internal.services.user import UserService
 MANAGER_ROUTER = APIRouter(prefix='/manager', tags=['Manager'], dependencies=[Depends(ManagerAuthorize())])
 
 
-@MANAGER_ROUTER.get('/input_data')
+@MANAGER_ROUTER.get('/input_data', tags=['Not working'])
 async def get_input_data() -> GetInputDataResponse:
     """Получение текущих входных данных"""
     pass
 
 
-@MANAGER_ROUTER.post('/input_data')
+@MANAGER_ROUTER.post('/input_data', tags=['Not working'])
 async def set_input_data_handler(request_data: SetInputDataRequest = Body()) -> None:
     """Загрузка или изменение входных данных для дальнейшего распределения задач"""
     return None
 
 
-@MANAGER_ROUTER.post('/distribution')
+@MANAGER_ROUTER.post('/distribution', tags=['Not working'])
 async def start_distribution_handler() -> None:
     """Запуск распределения задач"""
     return None
 
 
-@MANAGER_ROUTER.get('/distribution')
+@MANAGER_ROUTER.get('/distribution', tags=['Not working'])
 async def get_distribution_status_handler() -> None:
     """Получение статуса состояния распределения задач"""
     return None
 
 
-@MANAGER_ROUTER.get('/{user_id}', tags=['Working'])
+@MANAGER_ROUTER.get('/{user_id}')
 async def get_manager_handler(user_id: UUID, service: UserService = Depends()) -> GetManagerResponse:
     """Получение информации о менеджере по id"""
     data = await service.get_manager(user_id)
     return GetManagerResponse.model_validate(data)
 
 
-@MANAGER_ROUTER.get('/', tags=['Working'])
+@MANAGER_ROUTER.get('/')
 async def get_managers_handler(service: UserService = Depends()) -> GetManagersResponse:
     """Получение всех менеджеров"""
     data = await service.get_managers()
     return GetManagersResponse(managers=data)
 
 
-@MANAGER_ROUTER.post('/', tags=['Working'])
+@MANAGER_ROUTER.post('/')
 async def create_manager_handler(request_data: CreateManagerRequest, service: UserService = Depends()) -> CreateManagerResponse:
     """Создание нового менеджера"""
     created_manager_id = await service.create_manager(**request_data.model_dump())
@@ -57,6 +57,12 @@ async def create_manager_handler(request_data: CreateManagerRequest, service: Us
 
 
 @MANAGER_ROUTER.patch('/{user_id}')
-async def update_manager_handler(user_id: UUID, request_data: UpdateManagerRequest) -> None:
+async def update_manager_handler(user_id: UUID, request_data: UpdateManagerRequest, service: UserService = Depends()) -> None:
     """Изменение информации о менеджере"""
-    return None
+    await service.update_manager(user_id, **request_data.model_dump(exclude_none=True))
+
+
+@MANAGER_ROUTER.delete('/user_id')
+async def delete_manager_handler(user_id: UUID, service: UserService = Depends()) -> None:
+    """Удаление менеджера"""
+    await service.delete_manager(user_id)

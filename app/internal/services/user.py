@@ -1,9 +1,11 @@
+from typing import Type
 from uuid import UUID
 
 from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import IntegrityError
 
-from internal.core.types import RoleEnum, WorkerGradeEnum
+from internal.core.types import Empty, RoleEnum, WorkerGradeEnum
+from internal.repositories.db.models.point import Point
 from internal.repositories.db.models.user import User, Worker
 from internal.repositories.db.users import UserRepository
 
@@ -50,18 +52,78 @@ class UserService:
     async def get_manager(self, user_id: UUID) -> dict:
         user = await self.repository.get_user(user_id=user_id)
         if user is None:
-            raise HTTPException(status_code=404, detail='Manager not found')
+            raise HTTPException(status_code=404, detail='User not found')
         if user.role != RoleEnum.MANAGER:
             raise HTTPException(status_code=403, detail='User is not manager')
 
         return form_manager_response(user)
 
+    async def update_employee(
+        self,
+        user_id: UUID,
+        login: str | Type[Empty] = Empty,
+        password: str | Type[Empty] = Empty,
+        name: str | Type[Empty] = Empty,
+        surname: str | Type[Empty] = Empty,
+        patronymic: str | Type[Empty] = Empty,
+        workplace_id: UUID | Type[Empty] = Empty,
+        grade: WorkerGradeEnum | Type[Empty] = Empty,
+    ):
+        worker = await self.repository.get_worker(user_id=user_id)
+        if not worker:
+            raise HTTPException(status_code=404, detail='User not found')
+        await self.repository.update_worker(worker, workplace_id=workplace_id, grade=grade)
+
+        try:
+            await self.repository.update_user(worker.user, login=login, password=password, name=name, surname=surname, patronymic=patronymic)
+        except IntegrityError as e:
+            raise HTTPException(status_code=409, detail='Unable to update user') from e
+
+    async def update_manager(
+        self,
+        user_id: UUID,
+        login: str | Type[Empty] = Empty,
+        password: str | Type[Empty] = Empty,
+        name: str | Type[Empty] = Empty,
+        surname: str | Type[Empty] = Empty,
+        patronymic: str | Type[Empty] = Empty,
+    ):
+        user = await self.repository.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail='User not found')
+        if user.role != RoleEnum.MANAGER:
+            raise HTTPException(status_code=403, detail='User is not manager')
+
+        try:
+            await self.repository.update_user(user, login=login, password=password, name=name, surname=surname, patronymic=patronymic)
+        except IntegrityError as e:
+            raise HTTPException(status_code=409, detail='Unable to update user') from e
+
+    async def delete_employee(self, user_id: UUID):
+        worker = await self.repository.get_worker(user_id=user_id)
+        if not worker:
+            raise HTTPException(status_code=404, detail='User not found')
+
+        await self.repository.delete_worker(worker)
+        await self.repository.delete_user(worker.user)
+
+    async def delete_manager(self, user_id: UUID):
+        user = await self.repository.get_user(user_id=user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail='User not found')
+        if user.role != RoleEnum.MANAGER:
+            raise HTTPException(status_code=403, detail='User is not manager')
+
+        await self.repository.delete_user(user)
+
 
 def form_employee_response(worker: Worker):
     user: User = worker.user
+    workplace_point: Point = worker.workplace.point
     return {
         'id': user.id,
-        'address': worker.workplace.point.address,
+        'workplace': {'latitude': workplace_point.latitude, 'longitude': workplace_point.longitude, 'address': workplace_point.address},
+        'grade': worker.grade,
         'login': user.login,
         'name': user.name,
         'surname': user.surname,

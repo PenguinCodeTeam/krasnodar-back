@@ -13,6 +13,7 @@ class IdModel(BaseModel):
 class Point(BaseModel):
     latitude: float
     longitude: float
+    address: str
 
 
 class Task(BaseModel):

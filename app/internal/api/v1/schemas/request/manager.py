@@ -3,7 +3,6 @@ from typing import Optional
 from pydantic import BaseModel
 
 from internal.api.v1.schemas.common import InputDataRow
-from internal.core.types import RoleEnum
 
 
 class OptionalInputDataRow(BaseModel):
@@ -32,9 +31,8 @@ class CreateManagerRequest(BaseModel):
 
 
 class UpdateManagerRequest(BaseModel):
-    login: Optional[str]
-    password: Optional[str]
-    role: Optional[RoleEnum] = RoleEnum.MANAGER
-    name: Optional[str]
-    surname: Optional[str]
-    patronymic: Optional[str]
+    login: str = None
+    password: str = None
+    name: str = None
+    surname: str = None
+    patronymic: str = None
