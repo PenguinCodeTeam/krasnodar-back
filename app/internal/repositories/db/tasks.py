@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from internal.core.types import Empty, PriorityEnum, WorkerGradeEnum
 from internal.repositories.db.base import DatabaseRepository
-from internal.repositories.db.models import ScheduleTask, Task
+from internal.repositories.db.models import Task, WorkSchedule
 
 
 class TaskRepository(DatabaseRepository):
@@ -82,8 +82,10 @@ class TaskRepository(DatabaseRepository):
 
         return task
 
-    async def add_schedule_tasks(self, worker_id: uuid.UUID, tasks: list) -> list[ScheduleTask]:
-        db_tasks = [Task(worker_id=worker_id, task_id=task.id, number_task=number, point_id=task.point.id) for number, task in zip(range(len(tasks)), tasks)]
+    async def add_schedule_tasks(self, user_id: uuid.UUID, tasks: list) -> list[WorkSchedule]:
+        db_tasks = [
+            WorkSchedule(user_id=user_id, task_id=task.id, task_number=number, point_id=task.point.id) for number, task in zip(range(len(tasks)), tasks)
+        ]
         async with self.transaction() as session:
             session.add_all(db_tasks)
         return db_tasks

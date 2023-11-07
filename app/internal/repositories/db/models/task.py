@@ -20,16 +20,17 @@ class Task(Base):
     for_junior: Mapped[bool] = mapped_column(default=True)
     for_middle: Mapped[bool] = mapped_column(default=True)
     for_senior: Mapped[bool] = mapped_column(default=True)
+    # TODO: Сделать новую модельку TaskGrades
 
 
-class ScheduleTask(Base):
-    __tablename__ = 'schedule_tasks'
+class WorkSchedule(Base):
+    __tablename__ = 'work_schedule'
 
-    id: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4, primary_key=True)
-    worker_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('workers.user_id'))
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('workers.user_id'))
     task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('tasks.id'))
-    working_date: Mapped[date] = mapped_column(default=date.today)
-    number_task: Mapped[int]
+    date: Mapped[date] = mapped_column(default=date.today)
+    task_number: Mapped[int]
     point_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('points.id'))
 
     worker: Mapped[Worker] = relationship(lazy='joined')

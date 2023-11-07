@@ -135,8 +135,8 @@ def get_best_route(
 
 async def save_tasks_by_workers(distributed_tasks_by_workers: dict):
     task_repository = TaskRepository()
-    for worker_id, tasks in distributed_tasks_by_workers.items():
-        await task_repository.add_schedule_tasks(worker_id=worker_id, tasks=tasks)
+    for user_id, tasks in distributed_tasks_by_workers.items():
+        await task_repository.add_schedule_tasks(user_id=user_id, tasks=tasks)
 
 
 @celery.task(name='tasks_distribution')
