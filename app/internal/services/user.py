@@ -122,7 +122,7 @@ def form_employee_response(worker: Worker):
     workplace_point: Point = worker.workplace.point
     return {
         'id': user.id,
-        'workplace': {'latitude': workplace_point.latitude, 'longitude': workplace_point.longitude, 'address': workplace_point.address},
+        'workplace': {'id': workplace_point.id, 'address': workplace_point.address, 'city': workplace_point.city},
         'grade': worker.grade,
         'login': user.login,
         'name': user.name,

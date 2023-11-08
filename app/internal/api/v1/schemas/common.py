@@ -11,9 +11,9 @@ class IdModel(BaseModel):
 
 
 class Point(BaseModel):
-    latitude: float
-    longitude: float
+    id: UUID
     address: str
+    city: str = 'Краснодар'
 
 
 class Task(BaseModel):

@@ -10,16 +10,14 @@ from internal.repositories.db.models import Destination, Point, PointsDuration, 
 
 
 class PointRepository(DatabaseRepository):
-    async def get_point(
-        self,
-        id: uuid.UUID | Type[Empty] = Empty,
-        address: str | Type[Empty] = Empty,
-    ) -> Point | None:
+    async def get_point(self, id: uuid.UUID | Type[Empty] = Empty, address: str | Type[Empty] = Empty, city: str | Type[Empty] = Empty) -> Point | None:
         filters = []
         if id is not Empty:
             filters.append(Point.id == id)
         if address is not Empty:
             filters.append(Point.address == address)
+        if city is not Empty:
+            filters.append(Point.city == city)
 
         query = select(Point).where(*filters)
         async with self.transaction() as session:
@@ -34,35 +32,18 @@ class PointRepository(DatabaseRepository):
 
         return res.scalars().all()
 
-    async def add_point(
-        self,
-        address: str,
-        latitude: float,
-        longitude: float,
-    ) -> Point:
-        point = Point(
-            address=address,
-            latitude=latitude,
-            longitude=longitude,
-        )
+    async def add_point(self, address: str, city: str) -> Point:
+        point = Point(address=address, city=city)
         async with self.transaction() as session:
             session.add(point)
 
         return point
 
-    async def update_point(
-        self,
-        point: Point,
-        address: str | Type[Empty] = Empty,
-        latitude: float | Type[Empty] = Empty,
-        longitude: float | Type[Empty] = Empty,
-    ) -> Point:
+    async def update_point(self, point: Point, address: str | Type[Empty] = Empty, city: str | Type[Empty] = Empty) -> Point:
         if address is not Empty:
             point.address = address
-        if latitude is not Empty:
-            point.latitude = latitude
-        if longitude is not Empty:
-            point.longitude = longitude
+        if city is not Empty:
+            point.city = city
 
         async with self.transaction() as session:
             session.add(point)

@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,9 +12,9 @@ class Point(Base):
     __tablename__ = 'points'
 
     id: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4, primary_key=True, unique=True)
-    address: Mapped[str] = mapped_column(unique=True)
-    latitude: Mapped[float]
-    longitude: Mapped[float]
+    address: Mapped[str]
+    city: Mapped[str]
+    __table_args__ = (UniqueConstraint('address', 'city', name='city_address_unique'),)
 
 
 class Destination(Base):
