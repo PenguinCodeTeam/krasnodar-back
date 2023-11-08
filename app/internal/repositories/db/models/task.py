@@ -14,7 +14,7 @@ class Task(Base):
     __tablename__ = 'tasks'
 
     id: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4, primary_key=True)
-    task_type_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('task_types.id'))
+    task_type_id: Mapped[int] = mapped_column(ForeignKey('task_types.id'))
     point_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('points.id'))
     status: Mapped[TaskStatusEnum] = mapped_column(Enum(TaskStatusEnum))
 
@@ -36,7 +36,7 @@ class TaskType(Base):
 class TaskGrade(Base):
     __tablename__ = 'task_grades'
 
-    task_type_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('task_types.id'), primary_key=True)
+    task_type_id: Mapped[int] = mapped_column(ForeignKey('task_types.id'), primary_key=True)
     grade: Mapped[WorkerGradeEnum] = mapped_column(Enum(WorkerGradeEnum), primary_key=True)
 
     task_type: Mapped[TaskType] = relationship(lazy='joined', back_populates='task_grades')

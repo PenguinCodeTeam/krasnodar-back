@@ -1,4 +1,6 @@
 import uuid
+import zoneinfo
+from datetime import date, datetime
 from typing import Type
 
 from sqlalchemy import select
@@ -8,17 +10,20 @@ from internal.repositories.db.base import DatabaseRepository
 from internal.repositories.db.models import Task, TaskGrade, TaskType, WorkSchedule
 
 
+START_WORKING_DAY_TIME = 9 * 60 * 60  # 9 hours
+
+
 class TaskRepository(DatabaseRepository):
     async def get_task_type(
         self,
-        task_type_id: uuid.UUID | Type[Empty] = Empty,
+        task_type_id: int | Type[Empty] = Empty,
         name: str | Type[Empty] = Empty,
     ) -> TaskType | None:
         filters = []
         if task_type_id is not Empty:
             filters.append(TaskType.id == task_type_id)
         if name is not Empty:
-            filters.append(TaskType.login == name)
+            filters.append(TaskType.name == name)
 
         query = select(TaskType).where(*filters)
         async with self.transaction() as session:
@@ -50,9 +55,12 @@ class TaskRepository(DatabaseRepository):
 
     async def add_work_schedule(self, user_id: uuid.UUID, route: list[dict]) -> list[WorkSchedule]:
         db_tasks = []
-        expected_start_at = 0
+        moscow_timezone = zoneinfo.ZoneInfo('Europe/Moscow')
+        date_object = date.today()
+        datetime_object = datetime.datetime(date_object.year, date_object.month, date_object.day, tzinfo=moscow_timezone)
+        expected_start_at = int(datetime_object.timestamp()) + START_WORKING_DAY_TIME
         for number, data in zip(range(1, len(route)), route):
-            expected_finish_at = expected_start_at + route['duration_to_task'] + route['task'].task_type.duration
+            expected_finish_at = expected_start_at + data['duration_to_task'] + data['task'].task_type.duration
             db_tasks.append(
                 WorkSchedule(
                     user_id=user_id, task_id=route['task'].id, task_number=number, expected_start_at=expected_start_at, expected_finish_at=expected_finish_at
