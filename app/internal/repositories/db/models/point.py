@@ -12,8 +12,8 @@ class Point(Base):
     __tablename__ = 'points'
 
     id: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4, primary_key=True, unique=True)
-    address: Mapped[str] = mapped_column()
-    city: Mapped[str] = mapped_column()
+    address: Mapped[str]
+    city: Mapped[str]
     __table_args__ = (UniqueConstraint('address', 'city', name='city_address_unique'),)
 
 

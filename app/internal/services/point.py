@@ -3,21 +3,18 @@ from uuid import UUID
 from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import IntegrityError
 
-from config import YANDEX_GEOCODER_API_KEY
 from internal.repositories.db.models.point import Point
 from internal.repositories.db.points import PointRepository
-from internal.repositories.yandex_geocoder import YandexGeocoderRepository
 from internal.tasks import load_durations_for_point
 
 
 class PointService:
     def __init__(self):
         self.point_repository = PointRepository()
-        self.yandex_geocoder_repository = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
 
     async def add_workplace(self, address: str, city: str) -> UUID:
         try:
-            point = await self.repository.add_point(address=address, city=city)
+            point = await self.point_repository.add_point(address=address, city=city)
         except IntegrityError as e:
             raise HTTPException(status_code=409, detail='Point already exists') from e
 
@@ -26,7 +23,7 @@ class PointService:
         except IntegrityError as e:
             raise HTTPException(status_code=409, detail='Workplace already exists') from e
 
-        load_durations_for_point.delay(workplace.point_id, coordinates, True)
+        load_durations_for_point.delay(workplace.point_id, city, address, True)
 
         return workplace.point_id
 
