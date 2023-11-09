@@ -10,17 +10,5 @@ celery.conf.broker_url = REDIS_URL
 celery.conf.result_backend = REDIS_URL
 
 
-def get_last_task_id_by_name(task_name: str):
-    result_backend = celery.backend
-    task_ids = result_backend.get_task_meta_for(task_name)
-
-    if task_ids:
-        last_task_id = task_ids[-1].task_id
-        return last_task_id
-    else:
-        return None
-
-
-def get_status_by_task_id(task_id: str):
-    result = AsyncResult(task_id, app=celery)
-    return result.status
+def get_task_by_id(task_id: str):
+    return AsyncResult(task_id, app=celery)

@@ -5,22 +5,26 @@ from fastapi import APIRouter, Body, Depends
 from internal.api.v1.schemas.request.manager import CreateManagerRequest, SetInputDataRequest, UpdateManagerRequest
 from internal.api.v1.schemas.response.manager import CreateManagerResponse, GetInputDataResponse, GetManagerResponse, GetManagersResponse
 from internal.core.dependencies.authorization import ManagerAuthorize
+from internal.services.input_data import InputDataService
 from internal.services.user import UserService
 
 
 MANAGER_ROUTER = APIRouter(prefix='/manager', tags=['Manager'], dependencies=[Depends(ManagerAuthorize())])
 
 
-@MANAGER_ROUTER.get('/input_data', tags=['Not working'])
-async def get_input_data() -> GetInputDataResponse:
+@MANAGER_ROUTER.get('/input_data')
+async def get_input_data(service: InputDataService = Depends()) -> GetInputDataResponse:
     """Получение текущих входных данных"""
-    pass
+    response = await service.get_input_data()
+    return GetInputDataResponse.model_validate(response)
 
 
-@MANAGER_ROUTER.post('/input_data', tags=['Not working'])
-async def set_input_data_handler(request_data: SetInputDataRequest = Body()) -> None:
+@MANAGER_ROUTER.post('/input_data')
+async def set_input_data_handler(request_data: SetInputDataRequest = Body(), service: InputDataService = Depends()) -> GetInputDataResponse:
     """Загрузка или изменение входных данных для дальнейшего распределения задач"""
-    return None
+    data = request_data.model_dump()
+    response = await service.set_input_data(destinations=data['destinations'], task_types=data['task_types'], workers=data['workers'])
+    return GetInputDataResponse.model_validate(response)
 
 
 @MANAGER_ROUTER.post('/distribution', tags=['Not working'])

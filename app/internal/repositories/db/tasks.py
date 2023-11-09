@@ -29,7 +29,30 @@ class TaskRepository(DatabaseRepository):
         async with self.transaction() as session:
             res = await session.execute(query)
 
-        return res.scalar_one_or_none()
+        return res.unique().scalar_one_or_none()
+
+    async def get_task_types(self) -> tuple[TaskType]:
+        query = select(TaskType)
+        async with self.transaction() as session:
+            res = await session.execute(query)
+
+        return res.unique().scalars().all()
+
+    async def update_task_type(
+        self,
+        task_type: TaskType,
+        priority: PriorityEnum | Type[Empty] = Empty,
+        duration: int | Type[Empty] = Empty,
+    ) -> TaskType:
+        if priority is not Empty:
+            task_type.priority = priority
+        if duration is not Empty:
+            task_type.duration = duration
+
+        async with self.transaction() as session:
+            session.add(task_type)
+
+        return task_type
 
     async def get_tasks(
         self,

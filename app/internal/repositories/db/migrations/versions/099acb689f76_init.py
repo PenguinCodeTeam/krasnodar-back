@@ -114,6 +114,7 @@ def upgrade() -> None:
         sa.Column('user_id', sa.Uuid(), nullable=False),
         sa.Column('workplace_id', sa.Uuid(), nullable=False),
         sa.Column('grade', sa.Enum('SENIOR', 'MIDDLE', 'JUNIOR', name='workergradeenum'), nullable=False),
+        sa.Column('is_active', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
             ['user_id'],
             ['users.id'],
@@ -144,6 +145,12 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint('task_id'),
     )
+    op.create_table(
+        'celery_task_ids',
+        sa.Column('id', sa.Uuid(), nullable=False),
+        sa.Column('task_name', sa.String(), nullable=False),
+        sa.PrimaryKeyConstraint('task_name'),
+    )
     # ### end Alembic commands ###
 
 
@@ -159,4 +166,5 @@ def downgrade() -> None:
     op.drop_table('task_types')
     op.drop_table('points_distance')
     op.drop_table('points')
+    op.drop_table('celery_task_ids')
     # ### end Alembic commands ###
