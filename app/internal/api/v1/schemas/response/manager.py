@@ -101,5 +101,9 @@ class GetTasksDistributionResponse(CeleryTaskResponse):
     result: TasksDistributionResponse | None = None
 
 
+class GetWorkerTasksDistributionResponse(CeleryTaskResponse):
+    result: TasksDistributionWorkerResponse | None = None
+
+
 class CreateManagerResponse(IdModel):
     pass

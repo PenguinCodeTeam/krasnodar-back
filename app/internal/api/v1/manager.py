@@ -9,6 +9,7 @@ from internal.api.v1.schemas.response.manager import (
     GetManagerResponse,
     GetManagersResponse,
     GetTasksDistributionResponse,
+    GetWorkerTasksDistributionResponse,
 )
 from internal.core.dependencies.authorization import ManagerAuthorize
 from internal.services.distribution import DistributionService
@@ -44,8 +45,15 @@ async def start_distribution_handler(service: DistributionService = Depends()) -
 @MANAGER_ROUTER.get('/distribution')
 async def get_distribution_status_handler(service: DistributionService = Depends()) -> GetTasksDistributionResponse:
     """Получение статуса состояния распределения задач"""
-    response = await service.get_distribution_result()
+    response = await service.get_distribution_results()
     return GetTasksDistributionResponse.model_validate(response)
+
+
+@MANAGER_ROUTER.get('/distribution/{user_id}')
+async def get_distribution_status_handler_by_user(user_id: UUID, service: DistributionService = Depends()) -> GetWorkerTasksDistributionResponse:
+    """Получение статуса состояния распределения задач по пользователю"""
+    response = await service.get_distribution_result(user_id)
+    return GetWorkerTasksDistributionResponse.model_validate(response)
 
 
 @MANAGER_ROUTER.get('/{user_id}')

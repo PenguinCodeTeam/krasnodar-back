@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+from datetime import date
 from uuid import UUID
 
 from internal.core.types import PriorityEnum, TaskStatusEnum, WorkerGradeEnum
@@ -51,6 +52,7 @@ async def generate_graph() -> dict:
 
     graph = defaultdict(dict)
     all_tasks = await task_repository.get_tasks()
+
     workplaces = await point_repository.get_workplaces()
 
     for workplace in workplaces:
@@ -106,7 +108,15 @@ def get_best_route(
 
 async def save_tasks_by_workers(distributed_tasks_by_workers: dict):
     task_repository = TaskRepository()
+    work_schedule = await task_repository.get_work_schedule(date=date.today())
+    unique_task_ids = set()
+    for work_schedule_task in work_schedule:
+        if work_schedule_task.task_id not in unique_task_ids:
+            await task_repository.update_task(work_schedule_task.task, status=TaskStatusEnum.OPEN)
+            unique_task_ids.add(work_schedule_task.task_id)
+
     await task_repository.delete_work_schedule()
+
     for user_id, route in distributed_tasks_by_workers.items():
         await task_repository.add_work_schedule(user_id=user_id, route=route)
 

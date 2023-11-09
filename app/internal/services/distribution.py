@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import date
 from uuid import UUID
 
 from fastapi.exceptions import HTTPException
@@ -27,22 +28,62 @@ class DistributionService:
         await self.celery_task_id_repository.update_task(task_id=UUID(task.id), task_name='tasks_distribution')
         response = {'status': get_status(task.status), 'result': None}
         if task.successful():
-            response['result'] = await get_result(self.task_repository, self.user_repository)
+            response['result'] = await get_results(self.task_repository, self.user_repository)
         return response
 
-    async def get_distribution_result(self):
+    async def get_distribution_results(self):
         task = await self.celery_task_id_repository.get_task(task_name='tasks_distribution')
         if task is None:
             raise HTTPException(status_code=404, detail='Not found.')
         task = get_task_by_id(str(task.id))
         response = {'status': get_status(task.status), 'result': None}
         if task.successful():
-            response['result'] = await get_result(self.task_repository, self.user_repository)
+            response['result'] = await get_results(self.task_repository, self.user_repository)
+        return response
+
+    async def get_distribution_result(self, user_id: UUID):
+        task = await self.celery_task_id_repository.get_task(task_name='tasks_distribution')
+        if task is None:
+            raise HTTPException(status_code=404, detail='Not found.')
+        task = get_task_by_id(str(task.id))
+        response = {'status': get_status(task.status), 'result': None}
+        if task.successful():
+            response['result'] = await get_result(user_id, self.task_repository, self.user_repository)
         return response
 
 
-async def get_result(task_repository: TaskRepository, user_repository: UserRepository):
-    work_schedule = await task_repository.get_work_schedule()
+async def get_result(user_id: UUID, task_repository: TaskRepository, user_repository: UserRepository):
+    work_schedule = await task_repository.get_work_schedule(date=date.today(), user_id=user_id)
+    tasks_by_worker = []
+    for work_schedule_task in work_schedule:
+        tasks_by_worker.append(
+            {
+                'full_address': 'г. ' + work_schedule_task.task.point.city + ', ' + work_schedule_task.task.point.address,
+                'task_number': work_schedule_task.task_number,
+                'date': work_schedule_task.date,
+                'expected_start_at': work_schedule_task.expected_start_at,
+                'expected_finish_at': work_schedule_task.expected_finish_at,
+                'started_at': work_schedule_task.started_at,
+                'finished_at': work_schedule_task.finished_at,
+            }
+        )
+    worker = await user_repository.get_worker(user_id=user_id)
+    result = {
+        'worker': {
+            'full_address': 'г. ' + worker.workplace.point.city + ', ' + worker.workplace.point.address,
+            'name': worker.user.name,
+            'surname': worker.user.surname,
+            'login': worker.user.login,
+            'patronymic': worker.user.patronymic,
+            'grade': worker.grade,
+        },
+        'tasks': tasks_by_worker,
+    }
+    return result
+
+
+async def get_results(task_repository: TaskRepository, user_repository: UserRepository):
+    work_schedule = await task_repository.get_work_schedule(date=date.today())
     tasks_by_worker = defaultdict(list)
     for work_schedule_task in work_schedule:
         tasks_by_worker[work_schedule_task.user_id].append(
