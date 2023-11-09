@@ -16,7 +16,7 @@ class Task(Base):
     id: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4, primary_key=True)
     task_type_id: Mapped[int] = mapped_column(ForeignKey('task_types.id'))
     point_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('points.id'))
-    status: Mapped[TaskStatusEnum] = mapped_column(Enum(TaskStatusEnum))
+    status: Mapped[TaskStatusEnum] = mapped_column(Enum(TaskStatusEnum), default=TaskStatusEnum.OPEN)
 
     point: Mapped[Point] = relationship(lazy='joined')
     task_type: Mapped['TaskType'] = relationship(lazy='joined')

@@ -11,7 +11,7 @@ from internal.tasks.worker import celery
 MAX_WORKING_MINUTES = 8 * 60
 
 
-async def generate_tasks() -> dict:
+async def generate_tasks_for_graph() -> dict:
     task_repository = TaskRepository()
 
     senior_high_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN)
@@ -109,7 +109,7 @@ async def save_tasks_by_workers(distributed_tasks_by_workers: dict):
 
 async def async_tasks_distribution():
     point_repository = UserRepository()
-    grouped_tasks = await generate_tasks()
+    grouped_tasks = await generate_tasks_for_graph()
     graph = await generate_graph()
 
     distributed_tasks_by_workers = {}

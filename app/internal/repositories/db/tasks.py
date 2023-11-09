@@ -3,7 +3,7 @@ import zoneinfo
 from datetime import date, datetime
 from typing import Type
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from internal.core.types import Empty, PriorityEnum, TaskStatusEnum, WorkerGradeEnum
 from internal.repositories.db.base import DatabaseRepository
@@ -14,6 +14,11 @@ START_WORKING_DAY_TIME = 9 * 60 * 60  # 9 hours
 
 
 class TaskRepository(DatabaseRepository):
+    async def delete_tasks(self):
+        query = delete(Task)
+        async with self.transaction() as session:
+            await session.execute(query)
+
     async def get_task_type(
         self,
         task_type_id: int | Type[Empty] = Empty,
@@ -54,6 +59,23 @@ class TaskRepository(DatabaseRepository):
 
         return task_type
 
+    async def get_task(
+        self,
+        task_type_id: uuid.UUID | Type[Empty],
+        point_id: uuid.UUID | Type[Empty],
+    ) -> Task | None:
+        filters = []
+        if task_type_id is not Empty:
+            filters.append(Task.task_type_id == task_type_id)
+        if point_id is not Empty:
+            filters.append(Task.point_id == point_id)
+
+        query = select(Task).where(*filters)
+        async with self.transaction() as session:
+            res = await session.execute(query)
+
+        return res.unique().scalar_one_or_none()
+
     async def get_tasks(
         self,
         grade: WorkerGradeEnum | Type[Empty] = Empty,
@@ -75,6 +97,17 @@ class TaskRepository(DatabaseRepository):
             res = await session.execute(query)
 
         return res.unique().scalars().all()
+
+    async def add_task(
+        self,
+        task_type_id: uuid.UUID,
+        point_id: uuid.UUID,
+    ) -> Task:
+        task = Task(task_type_id=task_type_id, point_id=point_id)
+        async with self.transaction() as session:
+            session.add(task)
+
+        return task
 
     async def add_work_schedule(self, user_id: uuid.UUID, route: list[dict]) -> list[WorkSchedule]:
         db_tasks = []
