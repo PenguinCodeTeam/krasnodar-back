@@ -117,11 +117,6 @@ async def update_workplaces(workers: dict, point_repository: PointRepository, ya
             new_workplaces_by_address.remove(f'{workplace.point.city}, {workplace.point.address}')
             result['updated']['success'] += 1
             result['updated']['success_data'].append({'full_address': f'{workplace.point.city}, {workplace.point.address}'})
-        else:
-            await point_repository.delete_workplace(workplace)
-            await point_repository.delete_points_durations(from_point_id=workplace.point.id)
-            await point_repository.delete_points_durations(to_point_id=workplace.point.id)
-            await point_repository.delete_point(workplace.point)
     for worker in workers:
         if worker['city'] + ', ' + worker['address'] in new_workplaces_by_address:
             try:
