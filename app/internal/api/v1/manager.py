@@ -57,7 +57,7 @@ async def get_distribution_status_handler_by_user(user_id: UUID, service: Distri
 
 
 @MANAGER_ROUTER.get('/{user_id}')
-async def get_manager_handler(user_id: UUID, service: DistributionService = Depends()) -> GetManagerResponse:
+async def get_manager_handler(user_id: UUID, service: UserService = Depends()) -> GetManagerResponse:
     """Получение информации о менеджере по id"""
     data = await service.get_manager(user_id)
     return GetManagerResponse.model_validate(data)
