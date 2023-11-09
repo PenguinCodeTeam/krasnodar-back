@@ -8,6 +8,7 @@ from internal.core.types import RoleEnum
 from internal.repositories.db import PointRepository, TaskRepository, UserRepository
 from internal.repositories.yandex_geocoder import YandexGeocoderRepository
 from internal.tasks.points import load_durations_for_points
+from internal.tasks.tasks import async_generate_tasks
 from internal.tasks.worker import celery
 
 
@@ -116,7 +117,7 @@ async def update_workplaces(workers: dict, point_repository: PointRepository, ya
         if f'{workplace.point.city}, {workplace.point.address}' in new_workplaces_by_address:
             new_workplaces_by_address.remove(f'{workplace.point.city}, {workplace.point.address}')
             result['updated']['success'] += 1
-            result['updated']['success_data'].append({'full_address': f'{workplace.point.city}, {workplace.point.address}'})
+            result['updated']['success_data'].append({'full_address': 'г. ' + f'{workplace.point.city}, {workplace.point.address}'})
     for worker in workers:
         if worker['city'] + ', ' + worker['address'] in new_workplaces_by_address:
             try:
@@ -126,10 +127,10 @@ async def update_workplaces(workers: dict, point_repository: PointRepository, ya
                 await point_repository.add_workplace(point_id=point.id)
                 new_workplaces_by_address.remove(worker['city'] + ', ' + worker['address'])
                 result['new']['success'] += 1
-                result['new']['success_data'].append({'full_address': worker['city'] + ', ' + worker['address']})
+                result['new']['success_data'].append({'full_address': 'г. ' + worker['city'] + ', ' + worker['address']})
             except Exception:
                 result['new']['failed'] += 1
-                result['new']['failed_data'].append({'full_address': worker['city'] + ', ' + worker['address']})
+                result['new']['failed_data'].append({'full_address': 'г. ' + worker['city'] + ', ' + worker['address']})
     return result
 
 
@@ -189,6 +190,8 @@ async def async_update_input_data(destinations: dict, task_types: dict, workers:
     task_repository = TaskRepository()
     user_repository = UserRepository()
 
+    await task_repository.delete_tasks()
+
     destinations_result = await update_destinations(destinations, point_repository, yandex_geocoder)
     ignored_destinations = {point['full_address'] for point in destinations_result['updated']['success_data'] + destinations_result['updated']['failed_data']}
     task_types_result = await update_task_types(task_types, task_repository)
@@ -198,6 +201,7 @@ async def async_update_input_data(destinations: dict, task_types: dict, workers:
     ignored_addresses = set().union(ignored_destinations, ignored_workplaces)
 
     await load_durations_for_points(ignored_addresses)
+    await async_generate_tasks()
 
     return {
         'destinations': destinations_result,

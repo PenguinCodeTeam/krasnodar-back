@@ -103,7 +103,7 @@ async def load_durations_for_points(ignored_addresses: set[str]) -> None:
         ]
         coordinates.extend(await asyncio.gather(*coordinate_tasks))
     destinations = [
-        (coordinate, destination.point_id, f'{destination.point.city}, {destination.point.address}')
+        (coordinate, destination.point_id, 'г. ' + f'{destination.point.city}, {destination.point.address}')
         for destination, coordinate in zip(db_destinations, coordinates)
     ]
 
@@ -116,7 +116,8 @@ async def load_durations_for_points(ignored_addresses: set[str]) -> None:
         ]
         coordinates.extend(await asyncio.gather(*coordinate_tasks))
     workplaces = [
-        (coordinate, workplace.point_id, f'{workplace.point.city}, {workplace.point.address}') for workplace, coordinate in zip(db_workplaces, coordinates)
+        (coordinate, workplace.point_id, 'г. ' + f'{workplace.point.city}, {workplace.point.address}')
+        for workplace, coordinate in zip(db_workplaces, coordinates)
     ]
 
     to_add_durations = []
