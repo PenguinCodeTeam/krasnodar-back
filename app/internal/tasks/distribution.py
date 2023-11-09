@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+from datetime import date
 from uuid import UUID
 
 from internal.core.types import PriorityEnum, TaskStatusEnum, WorkerGradeEnum
@@ -51,17 +52,16 @@ async def generate_graph() -> dict:
 
     graph = defaultdict(dict)
     all_tasks = await task_repository.get_tasks()
+
     workplaces = await point_repository.get_workplaces()
 
     for workplace in workplaces:
         for task in all_tasks:
-            if task.point_id in graph[workplace.point.id]:
-                continue
-            graph[workplace.point.id][task.point_id] = await point_repository.get_points_duration(workplace.point.id, task.point_id)
+            graph[workplace.point_id][task.point_id] = await point_repository.get_points_duration(workplace.point.id, task.point_id)
 
     for from_task in all_tasks:
         for to_task in all_tasks:
-            if task.point_id in graph[workplace.point.id] or from_task.point_id == to_task.point_id:
+            if from_task.point_id == to_task.point_id:
                 continue
             graph[from_task.point_id][to_task.point_id] = await point_repository.get_points_duration(from_task.point_id, to_task.point_id)
 
@@ -75,36 +75,50 @@ def get_best_route(
     current_point: UUID,
     route: list[Task] = [],
     used_hours: int = 0,
+    initial: bool = True,
 ) -> list:
-    for _, tasks in grouped_tasks:
-        best_route = route
+    for _, tasks in grouped_tasks.items():
+        best_route = route.copy()
+        best_used_hours = 0
         for task in tasks:
-            if task.point_id in used_points or task in [data['task'] for data in route]:
+            if task.point_id in used_points or task.point_id in [data['task'].point_id for data in route]:
                 continue
-            if used_hours + task.task_type.duration + graph[current_point][task.point_id] <= MAX_WORKING_MINUTES:
-                route.append({'task': task, 'duration_to_task': graph[current_point][task.point_id]})
-                new_route: list = get_best_route(
+            if used_hours + task.task_type.duration + graph[current_point][task.point_id].duration <= MAX_WORKING_MINUTES:
+                new_route, new_used_hours = get_best_route(
                     graph=graph,
-                    used_hours=used_hours + task.task_type.duration + graph[current_point][task.point_id],
+                    used_hours=used_hours + task.task_type.duration + graph[current_point][task.point_id].duration,
                     used_points=used_points,
                     grouped_tasks=grouped_tasks,
-                    route=route,
+                    route=route.copy() + [{'task': task, 'duration_to_task': graph[current_point][task.point_id].duration}],
                     current_point=task.point_id,
+                    initial=False,
                 )
-                route.pop(-1)
-                if len(new_route) > best_route:
+                if len(new_route) > len(best_route) or len(new_route) == len(best_route) and new_used_hours < best_used_hours:
+                    best_used_hours = new_used_hours
                     best_route = new_route.copy()
                     del new_route
         route = best_route.copy()
+        used_hours = best_used_hours
         del best_route
+        if not initial:
+            break
 
-    return route
+    return route, used_hours
 
 
 async def save_tasks_by_workers(distributed_tasks_by_workers: dict):
     task_repository = TaskRepository()
-    for user_id, tasks in distributed_tasks_by_workers.items():
-        await task_repository.add_work_schedule(user_id=user_id, tasks=tasks)
+    work_schedule = await task_repository.get_work_schedule(date=date.today())
+    unique_task_ids = set()
+    for work_schedule_task in work_schedule:
+        if work_schedule_task.task_id not in unique_task_ids:
+            await task_repository.update_task(work_schedule_task.task, status=TaskStatusEnum.OPEN)
+            unique_task_ids.add(work_schedule_task.task_id)
+
+    await task_repository.delete_work_schedule()
+
+    for user_id, route in distributed_tasks_by_workers.items():
+        await task_repository.add_work_schedule(user_id=user_id, route=route)
 
 
 async def async_tasks_distribution():
@@ -120,14 +134,14 @@ async def async_tasks_distribution():
     used_points = set()
     for grade in [WorkerGradeEnum.SENIOR, WorkerGradeEnum.MIDDLE, WorkerGradeEnum.JUNIOR]:
         for worker in workers_by_grade[grade]:
-            distributed_tasks_by_workers[worker.id] = get_best_route(
+            distributed_tasks_by_workers[worker.user_id], _ = get_best_route(
                 graph=graph,
                 used_points=used_points,
-                list_of_available_tasks=grouped_tasks[grade],
+                grouped_tasks=grouped_tasks[grade],
                 current_point=worker.workplace_id,
             )
-            for task in distributed_tasks_by_workers[worker.id]:
-                used_points.add(task.point_id)
+            for task in distributed_tasks_by_workers[worker.user_id]:
+                used_points.add(task['task'].point_id)
 
     await save_tasks_by_workers(distributed_tasks_by_workers)
 

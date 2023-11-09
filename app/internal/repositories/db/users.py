@@ -115,7 +115,7 @@ class UserRepository(DatabaseRepository):
         if grade is not Empty:
             filters.append(Worker.grade == grade)
         if is_active is not Empty:
-            filters.append(Worker.is_active is is_active)
+            filters.append(Worker.is_active.is_(is_active))
 
         query = select(Worker).where(*filters)
         async with self.transaction() as session:

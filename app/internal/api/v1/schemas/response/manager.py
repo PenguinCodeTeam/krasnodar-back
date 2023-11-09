@@ -2,7 +2,14 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from internal.api.v1.schemas.common import DestinationDataRowResponse, IdModel, TaskTypeDataRow, WorkerDataRowResponse, WorkplaceDataRowResponse
+from internal.api.v1.schemas.common import (
+    DestinationDataRowResponse,
+    IdModel,
+    TaskTypeDataRow,
+    WorkerDataRowResponse,
+    WorkplaceDataRowResponse,
+    WorkScheduleResponse,
+)
 from internal.core.types import CeleryTaskStatusEnum, RoleEnum
 
 
@@ -72,9 +79,30 @@ class InputDataResponse(BaseModel):
     workers: WorkerDataResults
 
 
-class GetInputDataResponse(BaseModel):
+class CeleryTaskResponse(BaseModel):
     status: CeleryTaskStatusEnum
+    result: Any | None = None
+
+
+class GetInputDataResponse(CeleryTaskResponse):
     result: InputDataResponse | None = None
+
+
+class TasksDistributionWorkerResponse(BaseModel):
+    worker: WorkerDataRowResponse
+    tasks: list[WorkScheduleResponse]
+
+
+class TasksDistributionResponse(BaseModel):
+    workers_distribution: list[TasksDistributionWorkerResponse]
+
+
+class GetTasksDistributionResponse(CeleryTaskResponse):
+    result: TasksDistributionResponse | None = None
+
+
+class GetWorkerTasksDistributionResponse(CeleryTaskResponse):
+    result: TasksDistributionWorkerResponse | None = None
 
 
 class CreateManagerResponse(IdModel):

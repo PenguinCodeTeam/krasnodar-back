@@ -73,12 +73,12 @@ async def update_destinations(destinations: dict, point_repository: PointReposit
             await point_repository.delete_point(destination.point)
     for destination in destinations:
         if destination['city'] + ', ' + destination['address'] in new_destination_by_addresses.keys():
+            destination['created_at'] = date.today() - timedelta(days=1) if destination['connected_at'] == 'вчера' else date(day=1, month=1, year=2000)
+            destination['full_address'] = 'г. ' + destination['city'] + ', ' + destination['address']
             try:
                 if not await yandex_geocoder.get_coordinates(city=destination['city'], address=destination['address']):
                     raise Exception()
                 point = await point_repository.add_point(city=destination['city'], address=destination['address'])
-                destination['created_at'] = date.today() - timedelta(days=1) if destination['connected_at'] == 'вчера' else date(day=1, month=1, year=2000)
-                destination['full_address'] = 'г. ' + destination['city'] + ', ' + destination['address']
                 await point_repository.add_destination(
                     point_id=point.id,
                     created_at=destination['created_at'],
@@ -156,11 +156,11 @@ async def update_workers(workers: dict, point_repository: PointRepository, user_
             await user_repository.update_worker(worker, is_active=False)
     for worker in workers:
         if worker['surname'] + ' ' + worker['name'] + ' ' + worker['patronymic'] in new_workers_by_names.keys():
+            worker['role'] = RoleEnum.EMPLOYEE
+            worker['login'] = generate_employee_id()
+            worker['password'] = generate_employee_password()
+            worker['full_address'] = 'г. ' + worker['city'] + ', ' + worker['address']
             try:
-                worker['role'] = RoleEnum.EMPLOYEE
-                worker['login'] = generate_employee_id()
-                worker['password'] = generate_employee_password()
-                worker['full_address'] = 'г. ' + worker['city'] + ', ' + worker['address']
                 point = await point_repository.get_point(city=worker['city'], address=worker['address'])
                 workplace = await point_repository.get_workplace(point_id=point.id)
                 user = await user_repository.add_user(
