@@ -74,7 +74,7 @@ async def update_destinations(destinations: dict, point_repository: PointReposit
         if destination['city'] + ', ' + destination['address'] in new_destination_by_addresses.keys():
             try:
                 if not await yandex_geocoder.get_coordinates(city=destination['city'], address=destination['address']):
-                    raise Exception
+                    raise Exception()
                 point = await point_repository.add_point(city=destination['city'], address=destination['address'])
                 destination['created_at'] = date.today() - timedelta(days=1) if destination['connected_at'] == 'вчера' else date(day=1, month=1, year=2000)
                 destination['full_address'] = 'г. ' + destination['city'] + ', ' + destination['address']
@@ -121,7 +121,7 @@ async def update_workplaces(workers: dict, point_repository: PointRepository, ya
         if worker['city'] + ', ' + worker['address'] in new_workplaces_by_address:
             try:
                 if not await yandex_geocoder.get_coordinates(city=worker['city'], address=worker['address']):
-                    raise Exception
+                    raise Exception()
                 point = await point_repository.add_point(city=worker['city'], address=worker['address'])
                 await point_repository.add_workplace(point_id=point.id)
                 new_workplaces_by_address.remove(worker['city'] + ', ' + worker['address'])
