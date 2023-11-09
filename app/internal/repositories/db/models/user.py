@@ -1,9 +1,10 @@
 import uuid
 
-from internal.core.types import RoleEnum, WorkerGradeEnum
-from internal.repositories.db.models.base import Base
 from sqlalchemy import Enum, ForeignKey, LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from internal.core.types import RoleEnum, WorkerGradeEnum
+from internal.repositories.db.models.base import Base
 
 from .point import Workplace
 
@@ -26,6 +27,7 @@ class Worker(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users.id'), primary_key=True)
     workplace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('workplaces.point_id'))
     grade: Mapped[WorkerGradeEnum] = mapped_column(Enum(WorkerGradeEnum))
+    is_active: Mapped[bool] = mapped_column(default=True)
 
     user: Mapped[User] = relationship(lazy='joined')
     workplace: Mapped[Workplace] = relationship(lazy='joined')

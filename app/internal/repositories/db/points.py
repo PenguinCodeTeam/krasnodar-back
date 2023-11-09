@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 from typing import Type
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from internal.core.types import Empty
 from internal.repositories.db.base import DatabaseRepository
@@ -55,7 +55,7 @@ class PointRepository(DatabaseRepository):
         point: Point,
     ) -> Point:
         async with self.transaction() as session:
-            session.delete(point)
+            await session.delete(point)
 
         return point
 
@@ -82,7 +82,7 @@ class PointRepository(DatabaseRepository):
 
     async def delete_workplace(self, workplace: Workplace) -> Workplace:
         async with self.transaction() as session:
-            session.delete(workplace)
+            await session.delete(workplace)
 
         return workplace
 
@@ -195,7 +195,7 @@ class PointRepository(DatabaseRepository):
 
     async def delete_destination(self, destination: Destination) -> Destination:
         async with self.transaction() as session:
-            session.delete(destination)
+            await session.delete(destination)
 
         return destination
 
@@ -261,6 +261,21 @@ class PointRepository(DatabaseRepository):
 
     async def delete_points_duration(self, points_duration: PointsDuration) -> PointsDuration:
         async with self.transaction() as session:
-            session.delete(points_duration)
+            await session.delete(points_duration)
 
         return points_duration
+
+    async def delete_points_durations(
+        self,
+        from_point_id: uuid.UUID | Type[Empty] = Empty,
+        to_point_id: uuid.UUID | Type[Empty] = Empty,
+    ):
+        filters = []
+        if from_point_id is not Empty:
+            filters.append(PointsDuration.from_point_id == from_point_id)
+        if to_point_id is not Empty:
+            filters.append(PointsDuration.to_point_id == to_point_id)
+
+        query = delete(PointsDuration).where(*filters)
+        async with self.transaction() as session:
+            await session.execute(query)

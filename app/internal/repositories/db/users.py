@@ -107,12 +107,15 @@ class UserRepository(DatabaseRepository):
         self,
         workplace_id: uuid.UUID | Type[Empty] = Empty,
         grade: WorkerGradeEnum | Type[Empty] = Empty,
+        is_active: bool | Type[Empty] = Empty,
     ) -> tuple[Worker]:
         filters = []
         if workplace_id is not Empty:
             filters.append(Worker.workplace_id == workplace_id)
         if grade is not Empty:
             filters.append(Worker.grade == grade)
+        if is_active is not Empty:
+            filters.append(Worker.is_active is is_active)
 
         query = select(Worker).where(*filters)
         async with self.transaction() as session:
@@ -132,11 +135,14 @@ class UserRepository(DatabaseRepository):
         worker: Worker,
         workplace_id: uuid.UUID | Type[Empty] = Empty,
         grade: WorkerGradeEnum | Type[Empty] = Empty,
+        is_active: bool | Type[Empty] = Empty,
     ) -> Worker:
         if workplace_id is not Empty:
             worker.workplace_id = workplace_id
         if grade is not Empty:
             worker.grade = grade
+        if grade is not Empty:
+            worker.is_active = is_active
 
         async with self.transaction() as session:
             session.add(worker)

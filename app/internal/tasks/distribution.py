@@ -107,14 +107,13 @@ async def save_tasks_by_workers(distributed_tasks_by_workers: dict):
         await task_repository.add_work_schedule(user_id=user_id, tasks=tasks)
 
 
-@celery.task(name='tasks_distribution')
-def tasks_distribution():
+async def async_tasks_distribution():
     point_repository = UserRepository()
-    grouped_tasks = asyncio.run(generate_tasks())
-    graph = asyncio.run(generate_graph())
+    grouped_tasks = await generate_tasks()
+    graph = await generate_graph()
 
     distributed_tasks_by_workers = {}
-    workers = asyncio.run(point_repository.get_workers())
+    workers = await point_repository.get_workers(is_active=True)
     workers_by_grade = defaultdict(list)
     for worker in workers:
         workers_by_grade[worker.grade].append(worker)
@@ -130,4 +129,9 @@ def tasks_distribution():
             for task in distributed_tasks_by_workers[worker.id]:
                 used_points.add(task.point_id)
 
-    asyncio.run(save_tasks_by_workers(distributed_tasks_by_workers))
+    await save_tasks_by_workers(distributed_tasks_by_workers)
+
+
+@celery.task(name='tasks_distribution')
+def tasks_distribution():
+    asyncio.get_event_loop().run_until_complete(async_tasks_distribution())

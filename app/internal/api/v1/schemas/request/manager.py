@@ -1,25 +1,12 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
-from internal.api.v1.schemas.common import InputDataRow
-
-
-class OptionalInputDataRow(BaseModel):
-    address: Optional[str]
-    connected_at: Optional[str]
-    is_delivered: Optional[bool]
-    days_after_delivery: Optional[int]
-    accepted_requests: Optional[int]
-    completed_requests: Optional[int]
-
-
-class UpdateInputDataRequest(BaseModel):
-    input_data: list[InputDataRow]
+from internal.api.v1.schemas.common import DestinationDataRowRequest, TaskTypeDataRow, WorkerDataRowRequest
 
 
 class SetInputDataRequest(BaseModel):
-    input_data: list[InputDataRow]
+    destinations: list[DestinationDataRowRequest]
+    task_types: list[TaskTypeDataRow]
+    workers: list[WorkerDataRowRequest]
 
 
 class CreateManagerRequest(BaseModel):

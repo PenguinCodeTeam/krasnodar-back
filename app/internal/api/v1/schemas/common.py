@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from internal.core.types import PriorityEnum, TaskStatusEnum
+from internal.core.types import PriorityEnum, TaskStatusEnum, WorkerGradeEnum
 
 
 class IdModel(BaseModel):
@@ -27,10 +27,47 @@ class Task(BaseModel):
     employee_id: UUID
 
 
-class InputDataRow(BaseModel):
-    address: str
+class DestinationDataRow(BaseModel):
     connected_at: str
     is_delivered: bool
     days_after_delivery: int
     accepted_requests: int
     completed_requests: int
+
+
+class DestinationDataRowRequest(DestinationDataRow):
+    city: str
+    address: str
+
+
+class DestinationDataRowResponse(DestinationDataRow):
+    full_address: str
+
+
+class TaskTypeDataRow(BaseModel):
+    name: str
+    priority: PriorityEnum
+    duration: int
+    grades: list[WorkerGradeEnum]
+
+
+class WorkplaceDataRowResponse(BaseModel):
+    full_address: str
+
+
+class WorkerDataRow(BaseModel):
+    name: str
+    surname: str
+    patronymic: str
+    grade: WorkerGradeEnum
+    login: str | None = None
+    password: str | None = None
+
+
+class WorkerDataRowRequest(WorkerDataRow):
+    city: str
+    address: str
+
+
+class WorkerDataRowResponse(WorkerDataRow):
+    full_address: str
