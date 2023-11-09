@@ -145,7 +145,7 @@ class TaskRepository(DatabaseRepository):
 
         return db_tasks
 
-    async def delete_work_schedule(self) -> tuple[WorkSchedule]:
+    async def delete_work_schedule(self):
         query = delete(WorkSchedule).where(WorkSchedule.date == date.today())
         async with self.transaction() as session:
             await session.execute(query)
