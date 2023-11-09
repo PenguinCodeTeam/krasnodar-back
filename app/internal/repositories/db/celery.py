@@ -3,12 +3,12 @@ import uuid
 from sqlalchemy import select
 
 from internal.repositories.db.base import DatabaseRepository
-from internal.repositories.db.models import CeleryTaskId
+from internal.repositories.db.models import CeleryTask
 
 
-class CeleryTaskIdRepository(DatabaseRepository):
-    async def get_task(self, task_name: str) -> CeleryTaskId | None:
-        query = select(CeleryTaskId).where(CeleryTaskId.task_name == task_name)
+class CeleryTaskRepository(DatabaseRepository):
+    async def get_task(self, task_name: str) -> CeleryTask | None:
+        query = select(CeleryTask).where(CeleryTask.task_name == task_name)
         async with self.transaction() as session:
             res = await session.execute(query)
 
@@ -20,7 +20,7 @@ class CeleryTaskIdRepository(DatabaseRepository):
         if task:
             task.id = task_id
         else:
-            task = CeleryTaskId(id=task_id, task_name=task_name)
+            task = CeleryTask(id=task_id, task_name=task_name)
 
         async with self.transaction() as session:
             session.add(task)

@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class CeleryTaskStatus(str, Enum):
+class CeleryTaskStatusEnum(str, Enum):
     OK = 'ok'
     IN_PROGRESS = 'in_progress'
     ERROR = 'error'

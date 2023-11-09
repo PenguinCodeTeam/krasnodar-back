@@ -49,7 +49,7 @@ async def update_destinations(destinations: dict, point_repository: PointReposit
         if f'{destination.point.city}, {destination.point.address}' in new_destination_by_addresses.keys():
             new_destination = new_destination_by_addresses[f'{destination.point.city}, {destination.point.address}']
             new_destination['created_at'] = date.today() - timedelta(days=1) if new_destination['connected_at'] == 'вчера' else date(day=1, month=1, year=2000)
-            new_destination['full_address'] = f'{destination.point.city}, {destination.point.address}'
+            new_destination['full_address'] = 'г. ' + f'{destination.point.city}, {destination.point.address}'
             try:
                 await point_repository.update_destination(
                     destination,
@@ -77,7 +77,7 @@ async def update_destinations(destinations: dict, point_repository: PointReposit
                     raise Exception
                 point = await point_repository.add_point(city=destination['city'], address=destination['address'])
                 destination['created_at'] = date.today() - timedelta(days=1) if destination['connected_at'] == 'вчера' else date(day=1, month=1, year=2000)
-                destination['full_address'] = destination['city'] + ', ' + destination['address']
+                destination['full_address'] = 'г. ' + destination['city'] + ', ' + destination['address']
                 await point_repository.add_destination(
                     point_id=point.id,
                     created_at=destination['created_at'],
@@ -141,7 +141,7 @@ async def update_workers(workers: dict, point_repository: PointRepository, user_
         if f'{worker.user.surname} {worker.user.name} {worker.user.patronymic}' in new_workers_by_names.keys():
             update_worker = new_workers_by_names[f'{worker.user.surname} {worker.user.name} {worker.user.patronymic}']
             update_worker['login'] = worker.user.login
-            update_worker['full_address'] = f'{worker.workplace.point.city}, {worker.workplace.point.address}'
+            update_worker['full_address'] = 'г. ' + f'{worker.workplace.point.city}, {worker.workplace.point.address}'
             new_workers_by_names.pop(f'{worker.user.surname} {worker.user.name} {worker.user.patronymic}')
             try:
                 await user_repository.update_user(worker.user, login=update_worker['login'])
@@ -159,7 +159,7 @@ async def update_workers(workers: dict, point_repository: PointRepository, user_
                 worker['role'] = RoleEnum.EMPLOYEE
                 worker['login'] = generate_employee_id()
                 worker['password'] = generate_employee_password()
-                worker['full_address'] = worker['city'] + ', ' + worker['address']
+                worker['full_address'] = 'г. ' + worker['city'] + ', ' + worker['address']
                 point = await point_repository.get_point(city=worker['city'], address=worker['address'])
                 workplace = await point_repository.get_workplace(point_id=point.id)
                 user = await user_repository.add_user(

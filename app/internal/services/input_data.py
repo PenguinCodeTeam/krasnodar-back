@@ -2,14 +2,14 @@ from uuid import UUID
 
 from fastapi.exceptions import HTTPException
 
-from internal.core.types import CeleryTaskStatus
-from internal.repositories.db.celery import CeleryTaskIdRepository
+from internal.core.types import CeleryTaskStatusEnum
+from internal.repositories.db.celery import CeleryTaskRepository
 from internal.tasks import get_task_by_id, update_input_data
 
 
 class InputDataService:
     def __init__(self):
-        self.celery_task_id_repository = CeleryTaskIdRepository()
+        self.celery_task_id_repository = CeleryTaskRepository()
 
     async def set_input_data(self, destinations: dict, task_types: dict, workers: dict):
         task = await self.celery_task_id_repository.get_task(task_name='update_input_data')
@@ -39,8 +39,8 @@ class InputDataService:
 def get_status(status: str):
     match status:
         case 'SUCCESS':
-            return CeleryTaskStatus.OK
+            return CeleryTaskStatusEnum.OK
         case 'FAILURE':
-            return CeleryTaskStatus.ERROR
+            return CeleryTaskStatusEnum.ERROR
         case _:
-            return CeleryTaskStatus.IN_PROGRESS
+            return CeleryTaskStatusEnum.IN_PROGRESS

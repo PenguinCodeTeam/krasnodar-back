@@ -3,7 +3,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from internal.api.v1.schemas.common import DestinationDataRowResponse, IdModel, TaskTypeDataRow, WorkerDataRowResponse, WorkplaceDataRowResponse
-from internal.core.types import CeleryTaskStatus, RoleEnum
+from internal.core.types import CeleryTaskStatusEnum, RoleEnum
 
 
 class GetManagerResponse(IdModel):
@@ -73,7 +73,7 @@ class InputDataResponse(BaseModel):
 
 
 class GetInputDataResponse(BaseModel):
-    status: CeleryTaskStatus
+    status: CeleryTaskStatusEnum
     result: InputDataResponse | None = None
 
 

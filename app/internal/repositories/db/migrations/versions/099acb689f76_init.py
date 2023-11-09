@@ -146,7 +146,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('task_id'),
     )
     op.create_table(
-        'celery_task_ids',
+        'celery_tasks',
         sa.Column('id', sa.Uuid(), nullable=False),
         sa.Column('task_name', sa.String(), nullable=False),
         sa.PrimaryKeyConstraint('task_name'),
@@ -166,5 +166,5 @@ def downgrade() -> None:
     op.drop_table('task_types')
     op.drop_table('points_distance')
     op.drop_table('points')
-    op.drop_table('celery_task_ids')
+    op.drop_table('celery_tasks')
     # ### end Alembic commands ###
