@@ -3,8 +3,15 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends
 
 from internal.api.v1.schemas.request.manager import CreateManagerRequest, SetInputDataRequest, UpdateManagerRequest
-from internal.api.v1.schemas.response.manager import CreateManagerResponse, GetInputDataResponse, GetManagerResponse, GetManagersResponse
+from internal.api.v1.schemas.response.manager import (
+    CreateManagerResponse,
+    GetInputDataResponse,
+    GetManagerResponse,
+    GetManagersResponse,
+    GetTasksDistributionResponse,
+)
 from internal.core.dependencies.authorization import ManagerAuthorize
+from internal.services.distribution import DistributionService
 from internal.services.input_data import InputDataService
 from internal.services.user import UserService
 
@@ -27,20 +34,22 @@ async def set_input_data_handler(request_data: SetInputDataRequest = Body(), ser
     return GetInputDataResponse.model_validate(response)
 
 
-@MANAGER_ROUTER.post('/distribution', tags=['Not working'])
-async def start_distribution_handler() -> None:
+@MANAGER_ROUTER.post('/distribution')
+async def start_distribution_handler(service: DistributionService = Depends()) -> GetTasksDistributionResponse:
     """Запуск распределения задач"""
-    return None
+    response = await service.start_distribution()
+    return GetTasksDistributionResponse.model_validate(response)
 
 
-@MANAGER_ROUTER.get('/distribution', tags=['Not working'])
-async def get_distribution_status_handler() -> None:
+@MANAGER_ROUTER.get('/distribution')
+async def get_distribution_status_handler(service: DistributionService = Depends()) -> GetTasksDistributionResponse:
     """Получение статуса состояния распределения задач"""
-    return None
+    response = await service.get_distribution_result()
+    return GetTasksDistributionResponse.model_validate(response)
 
 
 @MANAGER_ROUTER.get('/{user_id}')
-async def get_manager_handler(user_id: UUID, service: UserService = Depends()) -> GetManagerResponse:
+async def get_manager_handler(user_id: UUID, service: DistributionService = Depends()) -> GetManagerResponse:
     """Получение информации о менеджере по id"""
     data = await service.get_manager(user_id)
     return GetManagerResponse.model_validate(data)

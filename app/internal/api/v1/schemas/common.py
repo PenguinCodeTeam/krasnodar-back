@@ -71,3 +71,13 @@ class WorkerDataRowRequest(WorkerDataRow):
 
 class WorkerDataRowResponse(WorkerDataRow):
     full_address: str
+
+
+class WorkScheduleResponse(BaseModel):
+    full_address: str
+    task_number: int
+    date: date
+    expected_start_at: int
+    expected_finish_at: int
+    started_at: int | None = None
+    finished_at: int | None = None

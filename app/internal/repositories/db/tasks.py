@@ -113,13 +113,13 @@ class TaskRepository(DatabaseRepository):
         db_tasks = []
         moscow_timezone = zoneinfo.ZoneInfo('Europe/Moscow')
         date_object = date.today()
-        datetime_object = datetime.datetime(date_object.year, date_object.month, date_object.day, tzinfo=moscow_timezone)
+        datetime_object = datetime(date_object.year, date_object.month, date_object.day, tzinfo=moscow_timezone)
         expected_start_at = int(datetime_object.timestamp()) + START_WORKING_DAY_TIME
-        for number, data in zip(range(1, len(route)), route):
-            expected_finish_at = expected_start_at + data['duration_to_task'] + data['task'].task_type.duration
+        for number, data in zip(range(len(route)), route):
+            expected_finish_at = expected_start_at + data['duration_to_task'] * 60 + data['task'].task_type.duration * 60
             db_tasks.append(
                 WorkSchedule(
-                    user_id=user_id, task_id=route['task'].id, task_number=number, expected_start_at=expected_start_at, expected_finish_at=expected_finish_at
+                    user_id=user_id, task_id=data['task'].id, task_number=number + 1, expected_start_at=expected_start_at, expected_finish_at=expected_finish_at
                 )
             )
             expected_start_at = expected_finish_at
@@ -127,3 +127,25 @@ class TaskRepository(DatabaseRepository):
             session.add_all(db_tasks)
 
         return db_tasks
+
+    async def delete_work_schedule(self):
+        query = delete(WorkSchedule).where(WorkSchedule.date == date.today())
+        async with self.transaction() as session:
+            await session.execute(query)
+
+    async def get_work_schedule(
+        self,
+        user_id: uuid.UUID | Type[Empty] = Empty,
+        task_number: int | Type[Empty] = Empty,
+    ) -> tuple[WorkSchedule]:
+        filters = []
+        if user_id is not Empty:
+            filters.append(WorkSchedule.user_id == user_id)
+        if task_number is not Empty:
+            filters.append(WorkSchedule.task_number == task_number)
+
+        query = select(WorkSchedule).where(*filters)
+        async with self.transaction() as session:
+            res = await session.execute(query)
+
+        return res.unique().scalars().all()
