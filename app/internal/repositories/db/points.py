@@ -95,6 +95,7 @@ class PointRepository(DatabaseRepository):
 
     async def get_destinations(
         self,
+        point_ids: list[uuid.UUID] | Type[Empty] = Empty,
         le_created_at: date | Type[Empty] = Empty,
         ge_created_at: date | Type[Empty] = Empty,
         is_delivered: bool | Type[Empty] = Empty,
@@ -111,6 +112,8 @@ class PointRepository(DatabaseRepository):
         point_completed: bool | Type[Empty] = Empty,
     ) -> tuple[Destination]:
         filters = []
+        if point_ids is not Empty:
+            filters.append(Destination.point_id.in_(point_ids))
         if le_created_at is not Empty:
             filters.append(Destination.created_at <= le_created_at)
         if ge_created_at is not Empty:
