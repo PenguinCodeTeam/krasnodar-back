@@ -194,12 +194,13 @@ async def async_update_input_data(destinations: dict, task_types: dict, workers:
     user_repository = UserRepository()
 
     destinations_result = await update_destinations(destinations, point_repository, yandex_geocoder)
+    destination_ids = [destination['point_id'] for destination in destinations_result['new']['success_data'] + destinations_result['updated']['success_data']]
     task_types_result = await update_task_types(task_types, task_repository)
     workplaces_result = await update_workplaces(workers, point_repository, yandex_geocoder)
     workers_result = await update_workers(workers, point_repository, user_repository, for_date)
 
     await load_durations_for_points()
-    await async_generate_tasks(for_date)
+    await async_generate_tasks(destination_ids, for_date)
 
     return {
         'destinations': destinations_result,

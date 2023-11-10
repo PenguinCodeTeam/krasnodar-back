@@ -15,53 +15,19 @@ MAX_WORKING_MINUTES = 8 * 60
 async def generate_tasks_for_graph() -> dict:
     task_repository = TaskRepository()
 
-    senior_high_priority_tasks = await task_repository.get_tasks(
-        grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN, le_date=date.today()
-    )
-    senior_medium_priority_tasks = await task_repository.get_tasks(
-        grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.MEDIUM, status=TaskStatusEnum.OPEN, le_date=date.today()
-    )
-    senior_low_priority_tasks = await task_repository.get_tasks(
-        grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.LOW, status=TaskStatusEnum.OPEN, le_date=date.today()
-    )
-
-    middle_high_priority_tasks = await task_repository.get_tasks(
-        grade=WorkerGradeEnum.MIDDLE, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN, le_date=date.today()
-    )
-    middle_medium_priority_tasks = await task_repository.get_tasks(
-        grade=WorkerGradeEnum.MIDDLE, priority=PriorityEnum.MEDIUM, status=TaskStatusEnum.OPEN, le_date=date.today()
-    )
-    middle_low_priority_tasks = await task_repository.get_tasks(
-        grade=WorkerGradeEnum.MIDDLE, priority=PriorityEnum.LOW, status=TaskStatusEnum.OPEN, le_date=date.today()
-    )
-
-    junior_high_priority_tasks = await task_repository.get_tasks(
-        grade=WorkerGradeEnum.JUNIOR, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN, le_date=date.today()
-    )
-    junior_medium_priority_tasks = await task_repository.get_tasks(
-        grade=WorkerGradeEnum.JUNIOR, priority=PriorityEnum.MEDIUM, status=TaskStatusEnum.OPEN, le_date=date.today()
-    )
-    junior_low_priority_tasks = await task_repository.get_tasks(
-        grade=WorkerGradeEnum.JUNIOR, priority=PriorityEnum.LOW, status=TaskStatusEnum.OPEN, le_date=date.today()
-    )
-
-    return {
-        WorkerGradeEnum.SENIOR: {
-            PriorityEnum.HIGH: senior_high_priority_tasks,
-            PriorityEnum.MEDIUM: senior_medium_priority_tasks,
-            PriorityEnum.LOW: senior_low_priority_tasks,
-        },
-        WorkerGradeEnum.MIDDLE: {
-            PriorityEnum.HIGH: middle_high_priority_tasks,
-            PriorityEnum.MEDIUM: middle_medium_priority_tasks,
-            PriorityEnum.LOW: middle_low_priority_tasks,
-        },
-        WorkerGradeEnum.JUNIOR: {
-            PriorityEnum.HIGH: junior_high_priority_tasks,
-            PriorityEnum.MEDIUM: junior_medium_priority_tasks,
-            PriorityEnum.LOW: junior_low_priority_tasks,
-        },
+    grouped_tasks = {
+        WorkerGradeEnum.SENIOR: defaultdict(dict),
+        WorkerGradeEnum.MIDDLE: defaultdict(dict),
+        WorkerGradeEnum.JUNIOR: defaultdict(dict),
     }
+    tasks = await task_repository.get_tasks(status=TaskStatusEnum.OPEN, le_date=date.today())
+    for task in tasks:
+        for task_grade in task.task_type.task_grades:
+            if task.task_type.priority not in grouped_tasks[task_grade.grade][task.active_from]:
+                grouped_tasks[task_grade.grade][task.active_from][task.task_type.priority] = []
+            grouped_tasks[task_grade.grade][task.active_from][task.task_type.priority].append(task)
+
+    return grouped_tasks
 
 
 async def generate_graph() -> dict:
@@ -86,40 +52,60 @@ async def generate_graph() -> dict:
     return graph
 
 
+def bruteforce_route(
+    graph: dict,
+    used_points: set,
+    tasks: list[Task],
+    current_point: UUID,
+    route: list[Task] = [],
+    used_hours: int = 0,
+):
+    best_route = route.copy()
+    best_used_hours = used_hours
+    for task in tasks:
+        if task.point_id in used_points or task.point_id in [data['task'].point_id for data in route]:
+            continue
+        if used_hours + task.task_type.duration + graph[current_point][task.point_id].duration <= MAX_WORKING_MINUTES:
+            new_route, new_used_hours = bruteforce_route(
+                graph=graph,
+                used_hours=used_hours + task.task_type.duration + graph[current_point][task.point_id].duration,
+                used_points=used_points,
+                tasks=tasks,
+                route=route.copy() + [{'task': task, 'duration_to_task': graph[current_point][task.point_id].duration}],
+                current_point=task.point_id,
+            )
+            if len(new_route) > len(best_route) or len(new_route) == len(best_route) and new_used_hours < best_used_hours:
+                best_used_hours = new_used_hours
+                best_route = new_route.copy()
+                del new_route
+    return best_route, best_used_hours
+
+
 def get_best_route(
     graph: dict,
     used_points: set,
     grouped_tasks: dict,
     current_point: UUID,
-    route: list[Task] = [],
-    used_hours: int = 0,
-    initial: bool = True,
 ) -> list:
-    for _, tasks in grouped_tasks.items():
-        best_route = route.copy()
-        best_used_hours = 0
-        for task in tasks:
-            if task.point_id in used_points or task.point_id in [data['task'].point_id for data in route]:
-                continue
-            if used_hours + task.task_type.duration + graph[current_point][task.point_id].duration <= MAX_WORKING_MINUTES:
-                new_route, new_used_hours = get_best_route(
-                    graph=graph,
-                    used_hours=used_hours + task.task_type.duration + graph[current_point][task.point_id].duration,
-                    used_points=used_points,
-                    grouped_tasks=grouped_tasks,
-                    route=route.copy() + [{'task': task, 'duration_to_task': graph[current_point][task.point_id].duration}],
-                    current_point=task.point_id,
-                    initial=False,
-                )
-                if len(new_route) > len(best_route) or len(new_route) == len(best_route) and new_used_hours < best_used_hours:
-                    best_used_hours = new_used_hours
-                    best_route = new_route.copy()
-                    del new_route
-        route = best_route.copy()
-        used_hours = best_used_hours
-        del best_route
-        if not initial:
-            break
+    used_hours = 0
+    route = []
+    for active_from in sorted(grouped_tasks.keys()):
+        updated_grouped_tasks_with_priority = {}
+        if PriorityEnum.HIGH in grouped_tasks[active_from]:
+            updated_grouped_tasks_with_priority[PriorityEnum.HIGH] = grouped_tasks[active_from][PriorityEnum.HIGH]
+        if PriorityEnum.MEDIUM in grouped_tasks[active_from]:
+            updated_grouped_tasks_with_priority[PriorityEnum.MEDIUM] = grouped_tasks[active_from][PriorityEnum.MEDIUM]
+        if PriorityEnum.LOW in grouped_tasks[active_from]:
+            updated_grouped_tasks_with_priority[PriorityEnum.LOW] = grouped_tasks[active_from][PriorityEnum.LOW]
+        for _, tasks in updated_grouped_tasks_with_priority.items():
+            route, used_hours = bruteforce_route(
+                graph=graph,
+                used_points=used_points,
+                tasks=tasks,
+                current_point=current_point,
+                route=route.copy(),
+                used_hours=used_hours,
+            )
 
     return route, used_hours
 

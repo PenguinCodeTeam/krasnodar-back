@@ -1,15 +1,16 @@
 import asyncio
 from datetime import date, timedelta
+from uuid import UUID
 
 from internal.core.types import TaskStatusEnum
 from internal.repositories.db import PointRepository, TaskRepository
 from internal.tasks.worker import celery
 
 
-async def async_generate_tasks(for_date: date):
+async def async_generate_tasks(destination_ids: set[UUID], for_date: date):
     task_repository = TaskRepository()
     point_repository = PointRepository()
-    destinations = await point_repository.get_destinations()
+    destinations = await point_repository.get_destinations(point_ids=destination_ids)
 
     delivery_cards = await task_repository.get_task_type(name='Доставка карт и материалов')
     educate_agent = await task_repository.get_task_type(name='Обучение агента')
