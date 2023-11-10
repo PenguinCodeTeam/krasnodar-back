@@ -129,7 +129,7 @@ async def load_durations_for_points() -> None:
 
     for from_coordinates, from_id in destinations:
         for to_coordinates, to_id in destinations:
-            if from_id == to_id or await point_repository.get_points_duration(workplace_id, destination_id):
+            if from_id == to_id or await point_repository.get_points_duration(from_id, to_id):
                 continue
             to_add_durations.append(
                 {'from_point_id': from_id, 'to_point_id': to_id, 'duration': open_route_service.get_duration(from_coordinates, to_coordinates)}

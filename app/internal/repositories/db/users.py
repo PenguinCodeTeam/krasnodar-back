@@ -1,4 +1,3 @@
-import datetime
 import uuid
 from typing import Type
 
@@ -7,7 +6,7 @@ from sqlalchemy import select
 from internal.core.types import Empty, RoleEnum, WorkerGradeEnum
 from internal.core.utils import hash_password
 from internal.repositories.db.base import DatabaseRepository
-from internal.repositories.db.models import User, Worker, WorkingDate
+from internal.repositories.db.models import User, Worker
 
 
 class UserRepository(DatabaseRepository):
@@ -108,16 +107,12 @@ class UserRepository(DatabaseRepository):
         self,
         workplace_id: uuid.UUID | Type[Empty] = Empty,
         grade: WorkerGradeEnum | Type[Empty] = Empty,
-        date: datetime.date | Type[Empty] = Empty,
     ) -> tuple[Worker]:
         filters = []
         if workplace_id is not Empty:
             filters.append(Worker.workplace_id == workplace_id)
         if grade is not Empty:
             filters.append(Worker.grade == grade)
-        if date is not Empty:
-            query_working_date = select(WorkingDate.worker_id).where(WorkingDate.date == date)
-            filters.append(Worker.user_id.in_(query_working_date))
 
         query = select(Worker).where(*filters)
         async with self.transaction() as session:
@@ -151,23 +146,3 @@ class UserRepository(DatabaseRepository):
     async def delete_worker(self, worker: Worker):
         async with self.transaction() as session:
             await session.delete(worker)
-
-    async def add_working_date(self, worker_id: uuid.UUID, date: datetime.date) -> WorkingDate:
-        working_date = WorkingDate(worker_id=worker_id, date=date)
-        async with self.transaction() as session:
-            session.add(working_date)
-
-        return working_date
-
-    async def get_working_date(self, worker_id: uuid.UUID, date: datetime.date) -> WorkingDate | None:
-        query = select(WorkingDate).where(WorkingDate.worker_id == worker_id, WorkingDate.date == date)
-        async with self.transaction() as session:
-            res = await session.execute(query)
-
-        return res.unique().scalar_one_or_none()
-
-    async def delete_working_date(self, working_date: WorkingDate) -> WorkingDate:
-        async with self.transaction() as session:
-            session.delete(working_date)
-
-        return working_date

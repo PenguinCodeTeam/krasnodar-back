@@ -73,10 +73,7 @@ class WorkerDataResults(BaseModel):
 
 
 class InputDataResponse(BaseModel):
-    destinations: DestinationDataResults
-    task_types: TaskTypeDataResults
-    workplaces: WorkplaceDataResults
-    workers: WorkerDataResults
+    destinations: list[DestinationDataRowResponse]
 
 
 class CeleryTaskResponse(BaseModel):

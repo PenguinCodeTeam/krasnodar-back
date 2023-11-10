@@ -132,7 +132,7 @@ async def async_tasks_distribution():
     graph = await generate_graph()
 
     distributed_tasks_by_workers = {}
-    workers = await point_repository.get_workers(date=date.today())
+    workers = await point_repository.get_workers()
     workers_by_grade = defaultdict(list)
     for worker in workers:
         workers_by_grade[worker.grade].append(worker)
