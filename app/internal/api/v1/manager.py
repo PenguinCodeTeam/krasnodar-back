@@ -31,7 +31,7 @@ async def get_input_data(service: InputDataService = Depends()) -> GetInputDataR
 async def set_input_data_handler(request_data: SetInputDataRequest = Body(), service: InputDataService = Depends()) -> GetInputDataResponse:
     """Загрузка или изменение входных данных для дальнейшего распределения задач"""
     data = request_data.model_dump()
-    response = await service.set_input_data(destinations=data['destinations'], task_types=data['task_types'], workers=data['workers'])
+    response = await service.set_input_data(destinations=data['destinations'], task_types=data['task_types'], workers=data['workers'], for_date=data['date'])
     return GetInputDataResponse.model_validate(response)
 
 

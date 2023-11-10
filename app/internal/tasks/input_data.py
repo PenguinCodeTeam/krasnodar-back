@@ -49,6 +49,7 @@ async def update_destinations(destinations: dict, point_repository: PointReposit
     for destination in storaged_destinations:
         if f'{destination.point.city}, {destination.point.address}' in new_destination_by_addresses.keys():
             new_destination = new_destination_by_addresses[f'{destination.point.city}, {destination.point.address}']
+            new_destination['point_id'] = destination.point_id
             new_destination['created_at'] = date.today() - timedelta(days=1) if new_destination['connected_at'] == 'вчера' else date(day=1, month=1, year=2000)
             new_destination['full_address'] = 'г. ' + f'{destination.point.city}, {destination.point.address}'
             try:
@@ -66,11 +67,6 @@ async def update_destinations(destinations: dict, point_repository: PointReposit
                 result['updated']['failed'] += 1
                 result['updated']['failed_data'].append(new_destination)
             new_destination_by_addresses.pop(f'{destination.point.city}, {destination.point.address}')
-        else:
-            await point_repository.delete_destination(destination)
-            await point_repository.delete_points_durations(from_point_id=destination.point.id)
-            await point_repository.delete_points_durations(to_point_id=destination.point.id)
-            await point_repository.delete_point(destination.point)
     for destination in destinations:
         if destination['city'] + ', ' + destination['address'] in new_destination_by_addresses.keys():
             destination['created_at'] = date.today() - timedelta(days=1) if destination['connected_at'] == 'вчера' else date(day=1, month=1, year=2000)
@@ -87,6 +83,7 @@ async def update_destinations(destinations: dict, point_repository: PointReposit
                     accepted_requests=destination['accepted_requests'],
                     completed_requests=destination['completed_requests'],
                 )
+                destination['point_id'] = point.id
                 result['new']['success'] += 1
                 result['new']['success_data'].append(destination)
             except Exception:
@@ -117,7 +114,7 @@ async def update_workplaces(workers: dict, point_repository: PointRepository, ya
         if f'{workplace.point.city}, {workplace.point.address}' in new_workplaces_by_address:
             new_workplaces_by_address.remove(f'{workplace.point.city}, {workplace.point.address}')
             result['updated']['success'] += 1
-            result['updated']['success_data'].append({'full_address': 'г. ' + f'{workplace.point.city}, {workplace.point.address}'})
+            result['updated']['success_data'].append({'point_id': workplace.point_id, 'full_address': f'{workplace.point.city}, {workplace.point.address}'})
     for worker in workers:
         if worker['city'] + ', ' + worker['address'] in new_workplaces_by_address:
             try:
@@ -127,14 +124,14 @@ async def update_workplaces(workers: dict, point_repository: PointRepository, ya
                 await point_repository.add_workplace(point_id=point.id)
                 new_workplaces_by_address.remove(worker['city'] + ', ' + worker['address'])
                 result['new']['success'] += 1
-                result['new']['success_data'].append({'full_address': 'г. ' + worker['city'] + ', ' + worker['address']})
+                result['new']['success_data'].append({'point_id': point.id, 'full_address': 'г. ' + worker['city'] + ', ' + worker['address']})
             except Exception:
                 result['new']['failed'] += 1
-                result['new']['failed_data'].append({'full_address': 'г. ' + worker['city'] + ', ' + worker['address']})
+                result['new']['failed_data'].append({'point_id': point.id, 'full_address': 'г. ' + worker['city'] + ', ' + worker['address']})
     return result
 
 
-async def update_workers(workers: dict, point_repository: PointRepository, user_repository: UserRepository):
+async def update_workers(workers: dict, point_repository: PointRepository, user_repository: UserRepository, for_date: date):
     result = get_result_form()
     storaged_workers = await user_repository.get_workers()
     new_workers_by_names = {worker['surname'] + ' ' + worker['name'] + ' ' + worker['patronymic']: worker for worker in workers}
@@ -146,14 +143,19 @@ async def update_workers(workers: dict, point_repository: PointRepository, user_
             new_workers_by_names.pop(f'{worker.user.surname} {worker.user.name} {worker.user.patronymic}')
             try:
                 await user_repository.update_user(worker.user, login=update_worker['login'])
-                await user_repository.update_worker(worker, grade=update_worker['grade'], is_active=True)
+                await user_repository.update_worker(worker, grade=update_worker['grade'])
+                if await user_repository.get_working_date(worker_id=worker.user_id, date=for_date) is None:
+                    await user_repository.add_working_date(worker_id=worker.user_id, date=for_date)
                 result['updated']['success'] += 1
                 result['updated']['success_data'].append(update_worker)
             except Exception:
                 result['updated']['failed'] += 1
                 result['updated']['failed_data'].append(update_worker)
         else:
-            await user_repository.update_worker(worker, is_active=False)
+            working_date = await user_repository.get_working_date(worker_id=worker.user_id, date=for_date)
+            if working_date:
+                await user_repository.delete_working_date(working_date=working_date)
+
     for worker in workers:
         if worker['surname'] + ' ' + worker['name'] + ' ' + worker['patronymic'] in new_workers_by_names.keys():
             worker['role'] = RoleEnum.EMPLOYEE
@@ -172,6 +174,7 @@ async def update_workers(workers: dict, point_repository: PointRepository, user_
                     role=worker['role'],
                 )
                 await user_repository.add_worker(user_id=user.id, workplace_id=workplace.point_id, grade=worker['grade'])
+                await user_repository.add_working_date(worker_id=user.id, date=for_date)
                 result['new']['success'] += 1
                 result['new']['success_data'].append(worker)
             except Exception:
@@ -184,24 +187,19 @@ async def update_workers(workers: dict, point_repository: PointRepository, user_
     return result
 
 
-async def async_update_input_data(destinations: dict, task_types: dict, workers: dict):
+async def async_update_input_data(destinations: dict, task_types: dict, workers: dict, for_date: date):
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
     point_repository = PointRepository()
     task_repository = TaskRepository()
     user_repository = UserRepository()
 
-    await task_repository.delete_tasks()
-
     destinations_result = await update_destinations(destinations, point_repository, yandex_geocoder)
-    ignored_destinations = {point['full_address'] for point in destinations_result['updated']['success_data'] + destinations_result['updated']['failed_data']}
     task_types_result = await update_task_types(task_types, task_repository)
     workplaces_result = await update_workplaces(workers, point_repository, yandex_geocoder)
-    ignored_workplaces = {point['full_address'] for point in workplaces_result['updated']['success_data'] + workplaces_result['updated']['failed_data']}
-    workers_result = await update_workers(workers, point_repository, user_repository)
-    ignored_addresses = set().union(ignored_destinations, ignored_workplaces)
+    workers_result = await update_workers(workers, point_repository, user_repository, for_date)
 
-    await load_durations_for_points(ignored_addresses)
-    await async_generate_tasks()
+    await load_durations_for_points()
+    await async_generate_tasks(for_date)
 
     return {
         'destinations': destinations_result,
@@ -212,5 +210,5 @@ async def async_update_input_data(destinations: dict, task_types: dict, workers:
 
 
 @celery.task(name='update_input_data')
-def update_input_data(destinations: dict, task_types: dict, workers: dict):
-    return asyncio.get_event_loop().run_until_complete(async_update_input_data(destinations, task_types, workers))
+def update_input_data(destinations: dict, task_types: dict, workers: dict, for_date: date):
+    return asyncio.get_event_loop().run_until_complete(async_update_input_data(destinations, task_types, workers, for_date))

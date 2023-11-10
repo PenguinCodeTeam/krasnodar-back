@@ -1,3 +1,4 @@
+import datetime
 import uuid
 
 from sqlalchemy import Enum, ForeignKey, LargeBinary
@@ -27,7 +28,15 @@ class Worker(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('users.id'), primary_key=True)
     workplace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('workplaces.point_id'))
     grade: Mapped[WorkerGradeEnum] = mapped_column(Enum(WorkerGradeEnum))
-    is_active: Mapped[bool] = mapped_column(default=True)
 
     user: Mapped[User] = relationship(lazy='joined')
     workplace: Mapped[Workplace] = relationship(lazy='joined')
+
+
+class WorkingDate(Base):
+    __tablename__ = 'working_date'
+
+    worker_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('workers.user_id'), primary_key=True)
+    date: Mapped[datetime.date] = mapped_column(primary_key=True)
+
+    worker: Mapped[Worker] = relationship(lazy='joined')

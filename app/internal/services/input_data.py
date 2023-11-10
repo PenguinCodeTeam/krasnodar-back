@@ -1,3 +1,4 @@
+import datetime
 from uuid import UUID
 
 from fastapi.exceptions import HTTPException
@@ -11,14 +12,14 @@ class InputDataService:
     def __init__(self):
         self.celery_task_id_repository = CeleryTaskRepository()
 
-    async def set_input_data(self, destinations: dict, task_types: dict, workers: dict):
+    async def set_input_data(self, destinations: dict, task_types: dict, workers: dict, for_date: datetime.date):
         task = await self.celery_task_id_repository.get_task(task_name='update_input_data')
         if task is not None:
             task = get_task_by_id(str(task.id))
             if not task.ready():
                 return HTTPException(status_code=423, detail='Locked.')
 
-        task = update_input_data.delay(destinations, task_types, workers)
+        task = update_input_data.delay(destinations, task_types, workers, for_date)
         await self.celery_task_id_repository.update_task(task_id=UUID(task.id), task_name='update_input_data')
         response = {'status': get_status(task.status), 'result': None}
         if task.successful():

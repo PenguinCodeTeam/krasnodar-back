@@ -1,11 +1,12 @@
 import asyncio
 from datetime import date, timedelta
 
+from internal.core.types import TaskStatusEnum
 from internal.repositories.db import PointRepository, TaskRepository
 from internal.tasks.worker import celery
 
 
-async def async_generate_tasks():
+async def async_generate_tasks(for_date: date):
     task_repository = TaskRepository()
     point_repository = PointRepository()
     destinations = await point_repository.get_destinations()
@@ -30,11 +31,17 @@ async def async_generate_tasks():
 
     for destination in destinations:
         for task_type in task_type_ids_and_statements:
+            tasks = await task_repository.get_tasks(task_type_id=task_type['task_type_id'], point_id=destination.point_id, le_date=for_date)
+            statutes = {task.status for task in tasks}
             if task_type['statement'](destination):
-                if await task_repository.get_task(task_type_id=task_type['task_type_id'], point_id=destination.point_id) is None:
-                    await task_repository.add_task(task_type_id=task_type['task_type_id'], point_id=destination.point_id)
+                if not tasks or len(statutes) == 1 and TaskStatusEnum.CLOSED in statutes:
+                    await task_repository.add_task(task_type_id=task_type['task_type_id'], point_id=destination.point_id, active_from=for_date)
+            else:
+                for task in tasks:
+                    if task.status != TaskStatusEnum.CLOSED:
+                        await task_repository.update_task(task, TaskStatusEnum.CLOSED)
 
 
 @celery.task(name='generate_tasks')
-def generate_tasks():
-    return asyncio.get_event_loop().run_until_complete(async_generate_tasks())
+def generate_tasks(for_date: date):
+    return asyncio.get_event_loop().run_until_complete(async_generate_tasks(for_date))
