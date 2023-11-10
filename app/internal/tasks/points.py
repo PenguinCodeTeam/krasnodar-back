@@ -9,11 +9,11 @@ from internal.repositories.yandex_geocoder import YandexGeocoderRepository
 from internal.tasks.worker import celery
 
 
-async def async_load_durations_for_point(point_id: UUID, city: str, address: str, is_workplace: bool = False) -> None:
+async def async_load_durations_for_workplace(workplace_id: UUID, workplace_city: str, workplace_address: str) -> None:
     point_repository = PointRepository()
     open_route_service = OpenRouteServiceRepository(api_key=OPEN_ROUTE_SERVICE_API_KEY)
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
-    point_coordinates = await yandex_geocoder.get_coordinates(city=city, address=address)
+
     db_destinations = await point_repository.get_destinations()
     coordinates = []
     for attempt in range(int(ceil(len(db_destinations) / 50))):
@@ -22,57 +22,19 @@ async def async_load_durations_for_point(point_id: UUID, city: str, address: str
             for index in range(attempt * 50, min((attempt + 1) * 50, len(db_destinations)))
         ]
         coordinates.extend(await asyncio.gather(*coordinate_tasks))
-    destinations = [
-        {
-            'point_id': destination.point_id,
-            'coordinates': coordinate,
-        }
-        for destination, coordinate in zip(db_destinations, coordinates)
-    ]
+    destinations = [(coordinate, destination.point_id) for destination, coordinate in zip(db_destinations, coordinates)]
+
+    workplace_coordinates = await yandex_geocoder.get_coordinates(city=workplace_city, address=workplace_address)
     to_add_durations = []
-    for destination in destinations:
-        if destination['point_id'] == point_id:
-            continue
+
+    for destination_coordinates, destination_id in destinations:
         to_add_durations.append(
             {
-                'from_point_id': point_id,
-                'to_point_id': destination['point_id'],
-                'duration': open_route_service.get_duration(point_coordinates, destination['coordinates']),
+                'from_point_id': workplace_id,
+                'to_point_id': destination_id,
+                'duration': open_route_service.get_duration(workplace_coordinates, destination_coordinates),
             }
         )
-        if not is_workplace:
-            to_add_durations.append(
-                {
-                    'from_point_id': destination['point_id'],
-                    'to_point_id': point_id,
-                    'duration': open_route_service.get_duration(destination['coordinates'], point_coordinates),
-                }
-            )
-
-    if not is_workplace:
-        db_workplaces = await point_repository.get_workplaces()
-        coordinates = []
-        for attempt in range(int(ceil(len(db_workplaces) / 50))):
-            coordinate_tasks = [
-                yandex_geocoder.get_coordinates(city=db_workplaces[index].point.city, address=db_workplaces[index].point.address)
-                for index in range(attempt * 50, min((attempt + 1) * 50, len(db_workplaces)))
-            ]
-            coordinates.extend(await asyncio.gather(*coordinate_tasks))
-        workplaces = [
-            {
-                'point_id': workplace.point_id,
-                'coordinates': coordinate,
-            }
-            for workplace, coordinate in zip(db_workplaces, coordinates)
-        ]
-        for workplace in workplaces:
-            to_add_durations.append(
-                {
-                    'from_point_id': workplace['point_id'],
-                    'to_point_id': point_id,
-                    'duration': open_route_service.get_duration(point_coordinates, workplace['coordinates']),
-                }
-            )
 
     durations = []
     for attempt in range(int(ceil(len(to_add_durations) / 40))):
@@ -84,9 +46,9 @@ async def async_load_durations_for_point(point_id: UUID, city: str, address: str
         )
 
 
-@celery.task(name='load_durations_for_point')
-def load_durations_for_point(point_id: UUID, city: str, address: str, is_workplace: bool = False):
-    asyncio.get_event_loop().run_until_complete(async_load_durations_for_point(point_id, city, address, is_workplace))
+@celery.task(name='load_durations_for_workplace')
+def load_durations_for_workplace(workplace_id: UUID, workplace_city: str, workplace_address: str):
+    asyncio.get_event_loop().run_until_complete(async_load_durations_for_workplace(workplace_id, workplace_city, workplace_address))
 
 
 async def load_durations_for_points() -> None:
