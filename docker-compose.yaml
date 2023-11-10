@@ -11,7 +11,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:8000"
     networks:
       - devNet
 
@@ -19,17 +19,15 @@ services:
     image: postgres:14
     restart: always
     container_name: postgres
-    expose:
-      - 5432
     ports:
-      - "6500:5432"
+      - "${POSTGRES_PORT:-6500}:5432"
     environment:
       PGUSER: user
       POSTGRES_PASSWORD: pass
       POSTGRES_USER: user
       POSTGRES_DB: postgres
     volumes:
-      - postgres-db:/var/lib/postgresql/data
+      - ./temp/pg-data:/var/lib/postgresql/data
     healthcheck:
       test: "pg_isready -h postgres"
       interval: 1s
@@ -46,10 +44,8 @@ services:
     command: bash -c "cd /project && poetry run celery -A app.internal.tasks.worker:celery worker --loglevel=info"
     environment:
       PYTHONPATH: "/project/app"
-    expose:
-      - 6380
     ports:
-      - "6380:6380"
+      - "${CELERY:-6380}:6380"
     depends_on:
       - redis
     networks:
@@ -63,10 +59,8 @@ services:
     command: bash -c "cd /project && poetry run celery -A app.internal.tasks.worker:celery flower"
     environment:
       PYTHONPATH: "/project/app"
-    expose:
-      - 5555
     ports:
-      - "5555:5555"
+      - "${FLOWER_PORT:-5555}:5555"
     depends_on:
       - redis
     networks:
@@ -75,15 +69,10 @@ services:
   redis:
     container_name: redis
     image: redis:7
-    expose:
-      - 6379
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     networks:
       - devNet
-
-volumes:
-  postgres-db:
 
 networks:
   devNet:
