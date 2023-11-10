@@ -36,7 +36,6 @@ class DestinationDataRow(BaseModel):
 
 
 class DestinationDataRowRequest(DestinationDataRow):
-    city: str
     address: str
 
 

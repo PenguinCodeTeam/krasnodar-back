@@ -1,4 +1,3 @@
-import datetime
 import uuid
 
 from sqlalchemy import Enum, ForeignKey, LargeBinary
@@ -31,12 +30,3 @@ class Worker(Base):
 
     user: Mapped[User] = relationship(lazy='joined')
     workplace: Mapped[Workplace] = relationship(lazy='joined')
-
-
-class WorkingDate(Base):
-    __tablename__ = 'working_date'
-
-    worker_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('workers.user_id'), primary_key=True)
-    date: Mapped[datetime.date] = mapped_column(primary_key=True)
-
-    worker: Mapped[Worker] = relationship(lazy='joined')
