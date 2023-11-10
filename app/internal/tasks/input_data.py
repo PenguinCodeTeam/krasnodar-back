@@ -114,7 +114,7 @@ async def update_workplaces(workers: dict, point_repository: PointRepository, ya
         if f'{workplace.point.city}, {workplace.point.address}' in new_workplaces_by_address:
             new_workplaces_by_address.remove(f'{workplace.point.city}, {workplace.point.address}')
             result['updated']['success'] += 1
-            result['updated']['success_data'].append({'full_address': workplace.point_id + f'{workplace.point.city}, {workplace.point.address}'})
+            result['updated']['success_data'].append({'point_id': workplace.point_id, 'full_address': f'{workplace.point.city}, {workplace.point.address}'})
     for worker in workers:
         if worker['city'] + ', ' + worker['address'] in new_workplaces_by_address:
             try:
@@ -143,7 +143,7 @@ async def update_workers(workers: dict, point_repository: PointRepository, user_
             new_workers_by_names.pop(f'{worker.user.surname} {worker.user.name} {worker.user.patronymic}')
             try:
                 await user_repository.update_user(worker.user, login=update_worker['login'])
-                await user_repository.update_worker(worker, grade=update_worker['grade'], is_active=True)
+                await user_repository.update_worker(worker, grade=update_worker['grade'])
                 if await user_repository.get_working_date(worker_id=worker.user_id, date=for_date) is None:
                     await user_repository.add_working_date(worker_id=worker.user_id, date=for_date)
                 result['updated']['success'] += 1
@@ -174,6 +174,7 @@ async def update_workers(workers: dict, point_repository: PointRepository, user_
                     role=worker['role'],
                 )
                 await user_repository.add_worker(user_id=user.id, workplace_id=workplace.point_id, grade=worker['grade'])
+                await user_repository.add_working_date(worker_id=user.id, date=for_date)
                 result['new']['success'] += 1
                 result['new']['success_data'].append(worker)
             except Exception:
@@ -192,17 +193,12 @@ async def async_update_input_data(destinations: dict, task_types: dict, workers:
     task_repository = TaskRepository()
     user_repository = UserRepository()
 
-    await task_repository.delete_tasks()
-
     destinations_result = await update_destinations(destinations, point_repository, yandex_geocoder)
-    old_destinations = {point['point_id'] for point in destinations_result['updated']['success_data'] + destinations_result['updated']['failed_data']}
     task_types_result = await update_task_types(task_types, task_repository)
     workplaces_result = await update_workplaces(workers, point_repository, yandex_geocoder)
-    old_workplaces = {point['point_id'] for point in workplaces_result['updated']['success_data'] + workplaces_result['updated']['failed_data']}
     workers_result = await update_workers(workers, point_repository, user_repository, for_date)
-    old_ids = set().union(old_destinations, old_workplaces)
 
-    await load_durations_for_points(old_ids)
+    await load_durations_for_points()
     await async_generate_tasks(for_date)
 
     return {

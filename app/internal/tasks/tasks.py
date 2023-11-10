@@ -34,7 +34,7 @@ async def async_generate_tasks(for_date: date):
             tasks = await task_repository.get_tasks(task_type_id=task_type['task_type_id'], point_id=destination.point_id, le_date=for_date)
             statutes = {task.status for task in tasks}
             if task_type['statement'](destination):
-                if not tasks or len(statutes) == 1 and TaskStatusEnum.CLOSED is statutes:
+                if not tasks or len(statutes) == 1 and TaskStatusEnum.CLOSED in statutes:
                     await task_repository.add_task(task_type_id=task_type['task_type_id'], point_id=destination.point_id, active_from=for_date)
             else:
                 for task in tasks:

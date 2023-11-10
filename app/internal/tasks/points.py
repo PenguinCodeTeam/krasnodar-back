@@ -89,7 +89,7 @@ def load_durations_for_point(point_id: UUID, city: str, address: str, is_workpla
     asyncio.get_event_loop().run_until_complete(async_load_durations_for_point(point_id, city, address, is_workplace))
 
 
-async def load_durations_for_points(ignored_ids: set[UUID]) -> None:
+async def load_durations_for_points() -> None:
     point_repository = PointRepository()
     open_route_service = OpenRouteServiceRepository(api_key=OPEN_ROUTE_SERVICE_API_KEY)
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
@@ -117,7 +117,7 @@ async def load_durations_for_points(ignored_ids: set[UUID]) -> None:
     to_add_durations = []
     for workplace_coordinates, workplace_id in workplaces:
         for destination_coordinates, destination_id in destinations:
-            if workplace_id in ignored_ids and destination_id in ignored_ids:
+            if await point_repository.get_points_duration(workplace_id, destination_id):
                 continue
             to_add_durations.append(
                 {
@@ -129,7 +129,7 @@ async def load_durations_for_points(ignored_ids: set[UUID]) -> None:
 
     for from_coordinates, from_id in destinations:
         for to_coordinates, to_id in destinations:
-            if from_id in ignored_ids and to_id in ignored_ids or from_id == to_id:
+            if from_id == to_id or await point_repository.get_points_duration(workplace_id, destination_id):
                 continue
             to_add_durations.append(
                 {'from_point_id': from_id, 'to_point_id': to_id, 'duration': open_route_service.get_duration(from_coordinates, to_coordinates)}

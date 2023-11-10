@@ -15,17 +15,35 @@ MAX_WORKING_MINUTES = 8 * 60
 async def generate_tasks_for_graph() -> dict:
     task_repository = TaskRepository()
 
-    senior_high_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN)
-    senior_medium_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.MEDIUM, status=TaskStatusEnum.OPEN)
-    senior_low_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.LOW, status=TaskStatusEnum.OPEN)
+    senior_high_priority_tasks = await task_repository.get_tasks(
+        grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN, le_date=date.today()
+    )
+    senior_medium_priority_tasks = await task_repository.get_tasks(
+        grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.MEDIUM, status=TaskStatusEnum.OPEN, le_date=date.today()
+    )
+    senior_low_priority_tasks = await task_repository.get_tasks(
+        grade=WorkerGradeEnum.SENIOR, priority=PriorityEnum.LOW, status=TaskStatusEnum.OPEN, le_date=date.today()
+    )
 
-    middle_high_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.MIDDLE, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN)
-    middle_medium_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.MIDDLE, priority=PriorityEnum.MEDIUM, status=TaskStatusEnum.OPEN)
-    middle_low_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.MIDDLE, priority=PriorityEnum.LOW, status=TaskStatusEnum.OPEN)
+    middle_high_priority_tasks = await task_repository.get_tasks(
+        grade=WorkerGradeEnum.MIDDLE, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN, le_date=date.today()
+    )
+    middle_medium_priority_tasks = await task_repository.get_tasks(
+        grade=WorkerGradeEnum.MIDDLE, priority=PriorityEnum.MEDIUM, status=TaskStatusEnum.OPEN, le_date=date.today()
+    )
+    middle_low_priority_tasks = await task_repository.get_tasks(
+        grade=WorkerGradeEnum.MIDDLE, priority=PriorityEnum.LOW, status=TaskStatusEnum.OPEN, le_date=date.today()
+    )
 
-    junior_high_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.JUNIOR, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN)
-    junior_medium_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.JUNIOR, priority=PriorityEnum.MEDIUM, status=TaskStatusEnum.OPEN)
-    junior_low_priority_tasks = await task_repository.get_tasks(grade=WorkerGradeEnum.JUNIOR, priority=PriorityEnum.LOW, status=TaskStatusEnum.OPEN)
+    junior_high_priority_tasks = await task_repository.get_tasks(
+        grade=WorkerGradeEnum.JUNIOR, priority=PriorityEnum.HIGH, status=TaskStatusEnum.OPEN, le_date=date.today()
+    )
+    junior_medium_priority_tasks = await task_repository.get_tasks(
+        grade=WorkerGradeEnum.JUNIOR, priority=PriorityEnum.MEDIUM, status=TaskStatusEnum.OPEN, le_date=date.today()
+    )
+    junior_low_priority_tasks = await task_repository.get_tasks(
+        grade=WorkerGradeEnum.JUNIOR, priority=PriorityEnum.LOW, status=TaskStatusEnum.OPEN, le_date=date.today()
+    )
 
     return {
         WorkerGradeEnum.SENIOR: {
@@ -51,7 +69,7 @@ async def generate_graph() -> dict:
     task_repository = TaskRepository()
 
     graph = defaultdict(dict)
-    all_tasks = await task_repository.get_tasks()
+    all_tasks = await task_repository.get_tasks(le_date=date.today(), status=TaskStatusEnum.OPEN)
 
     workplaces = await point_repository.get_workplaces()
 
@@ -106,15 +124,7 @@ def get_best_route(
     return route, used_hours
 
 
-async def save_tasks_by_workers(distributed_tasks_by_workers: dict):
-    task_repository = TaskRepository()
-    work_schedule = await task_repository.get_work_schedule(date=date.today())
-    unique_task_ids = set()
-    for work_schedule_task in work_schedule:
-        if work_schedule_task.task_id not in unique_task_ids:
-            await task_repository.update_task(work_schedule_task.task, status=TaskStatusEnum.OPEN)
-            unique_task_ids.add(work_schedule_task.task_id)
-
+async def save_tasks_by_workers(task_repository: TaskRepository, distributed_tasks_by_workers: dict):
     await task_repository.delete_work_schedule()
 
     for user_id, route in distributed_tasks_by_workers.items():
@@ -123,11 +133,20 @@ async def save_tasks_by_workers(distributed_tasks_by_workers: dict):
 
 async def async_tasks_distribution():
     point_repository = UserRepository()
+    task_repository = TaskRepository()
+
+    work_schedule = await task_repository.get_work_schedule(date=date.today())
+    unique_task_ids = set()
+    for work_schedule_task in work_schedule:
+        if work_schedule_task.task_id not in unique_task_ids:
+            await task_repository.update_task(work_schedule_task.task, status=TaskStatusEnum.OPEN)
+            unique_task_ids.add(work_schedule_task.task_id)
+
     grouped_tasks = await generate_tasks_for_graph()
     graph = await generate_graph()
 
     distributed_tasks_by_workers = {}
-    workers = await point_repository.get_workers(is_active=True)
+    workers = await point_repository.get_workers(date=date.today())
     workers_by_grade = defaultdict(list)
     for worker in workers:
         workers_by_grade[worker.grade].append(worker)
@@ -143,7 +162,7 @@ async def async_tasks_distribution():
             for task in distributed_tasks_by_workers[worker.user_id]:
                 used_points.add(task['task'].point_id)
 
-    await save_tasks_by_workers(distributed_tasks_by_workers)
+    await save_tasks_by_workers(task_repository, distributed_tasks_by_workers)
 
 
 @celery.task(name='tasks_distribution')
