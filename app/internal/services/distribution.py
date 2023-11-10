@@ -97,7 +97,7 @@ async def get_results(task_repository: TaskRepository, user_repository: UserRepo
                 'finished_at': work_schedule_task.finished_at,
             }
         )
-    workers = await user_repository.get_workers(is_active=True)
+    workers = await user_repository.get_workers(date=date.today())
     result = {'workers_distribution': []}
     for worker in workers:
         result['workers_distribution'].append(
