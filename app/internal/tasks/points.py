@@ -89,7 +89,7 @@ def load_durations_for_point(point_id: UUID, city: str, address: str, is_workpla
     asyncio.get_event_loop().run_until_complete(async_load_durations_for_point(point_id, city, address, is_workplace))
 
 
-async def load_durations_for_points(ignored_addresses: set[str]) -> None:
+async def load_durations_for_points(ignored_ids: set[UUID]) -> None:
     point_repository = PointRepository()
     open_route_service = OpenRouteServiceRepository(api_key=OPEN_ROUTE_SERVICE_API_KEY)
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
@@ -102,10 +102,7 @@ async def load_durations_for_points(ignored_addresses: set[str]) -> None:
             for index in range(attempt * 50, min((attempt + 1) * 50, len(db_destinations)))
         ]
         coordinates.extend(await asyncio.gather(*coordinate_tasks))
-    destinations = [
-        (coordinate, destination.point_id, 'г. ' + f'{destination.point.city}, {destination.point.address}')
-        for destination, coordinate in zip(db_destinations, coordinates)
-    ]
+    destinations = [(coordinate, destination.point_id) for destination, coordinate in zip(db_destinations, coordinates)]
 
     db_workplaces = await point_repository.get_workplaces()
     coordinates = []
@@ -115,15 +112,12 @@ async def load_durations_for_points(ignored_addresses: set[str]) -> None:
             for index in range(attempt * 50, min((attempt + 1) * 50, len(db_workplaces)))
         ]
         coordinates.extend(await asyncio.gather(*coordinate_tasks))
-    workplaces = [
-        (coordinate, workplace.point_id, 'г. ' + f'{workplace.point.city}, {workplace.point.address}')
-        for workplace, coordinate in zip(db_workplaces, coordinates)
-    ]
+    workplaces = [(coordinate, workplace.point_id) for workplace, coordinate in zip(db_workplaces, coordinates)]
 
     to_add_durations = []
-    for workplace_coordinates, workplace_id, workplace_full_address in workplaces:
-        for destination_coordinates, destination_id, destination_full_address in destinations:
-            if workplace_full_address in ignored_addresses and destination_full_address in ignored_addresses:
+    for workplace_coordinates, workplace_id in workplaces:
+        for destination_coordinates, destination_id in destinations:
+            if workplace_id in ignored_ids and destination_id in ignored_ids:
                 continue
             to_add_durations.append(
                 {
@@ -133,9 +127,9 @@ async def load_durations_for_points(ignored_addresses: set[str]) -> None:
                 }
             )
 
-    for from_coordinates, from_id, from_full_address in destinations:
-        for to_coordinates, to_id, to_full_address in destinations:
-            if from_full_address in ignored_addresses and to_full_address in ignored_addresses or from_id == to_id:
+    for from_coordinates, from_id in destinations:
+        for to_coordinates, to_id in destinations:
+            if from_id in ignored_ids and to_id in ignored_ids or from_id == to_id:
                 continue
             to_add_durations.append(
                 {'from_point_id': from_id, 'to_point_id': to_id, 'duration': open_route_service.get_duration(from_coordinates, to_coordinates)}

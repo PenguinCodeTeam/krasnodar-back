@@ -1,9 +1,12 @@
+import datetime
+
 from pydantic import BaseModel
 
 from internal.api.v1.schemas.common import DestinationDataRowRequest, TaskTypeDataRow, WorkerDataRowRequest
 
 
 class SetInputDataRequest(BaseModel):
+    date: datetime.date
     destinations: list[DestinationDataRowRequest]
     task_types: list[TaskTypeDataRow]
     workers: list[WorkerDataRowRequest]

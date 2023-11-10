@@ -61,14 +61,17 @@ class TaskRepository(DatabaseRepository):
 
     async def get_task(
         self,
-        task_type_id: uuid.UUID | Type[Empty],
-        point_id: uuid.UUID | Type[Empty],
+        task_type_id: uuid.UUID | Type[Empty] = Empty,
+        point_id: uuid.UUID | Type[Empty] = Empty,
+        status: TaskStatusEnum | Type[Empty] = Empty,
     ) -> Task | None:
         filters = []
         if task_type_id is not Empty:
             filters.append(Task.task_type_id == task_type_id)
         if point_id is not Empty:
             filters.append(Task.point_id == point_id)
+        if status is not Empty:
+            filters.append(Task.status == status)
 
         query = select(Task).where(*filters)
         async with self.transaction() as session:
@@ -81,6 +84,10 @@ class TaskRepository(DatabaseRepository):
         grade: WorkerGradeEnum | Type[Empty] = Empty,
         priority: PriorityEnum | Type[Empty] = Empty,
         status: TaskStatusEnum | Type[Empty] = Empty,
+        task_type_id: uuid.UUID | Type[Empty] = Empty,
+        point_id: uuid.UUID | Type[Empty] = Empty,
+        le_date: date | Type[Empty] = Empty,
+        ge_date: date | Type[Empty] = Empty,
     ) -> tuple[Task]:
         filters = []
         if grade is not Empty:
@@ -89,8 +96,16 @@ class TaskRepository(DatabaseRepository):
         if priority is not Empty:
             task_type_query = select(TaskType.id).where(TaskType.priority == priority)
             filters.append(Task.task_type_id.in_(task_type_query))
+        if task_type_id is not Empty:
+            filters.append(Task.task_type_id == task_type_id)
+        if point_id is not Empty:
+            filters.append(Task.point_id == point_id)
         if status is not Empty:
             filters.append(Task.status == status)
+        if le_date is not Empty:
+            filters.append(Task.active_from <= le_date)
+        if ge_date is not Empty:
+            filters.append(Task.active_from >= ge_date)
 
         query = select(Task).where(*filters)
         async with self.transaction() as session:
@@ -102,8 +117,9 @@ class TaskRepository(DatabaseRepository):
         self,
         task_type_id: uuid.UUID,
         point_id: uuid.UUID,
+        active_from: date,
     ) -> Task:
-        task = Task(task_type_id=task_type_id, point_id=point_id)
+        task = Task(task_type_id=task_type_id, point_id=point_id, active_from=active_from)
         async with self.transaction() as session:
             session.add(task)
 
