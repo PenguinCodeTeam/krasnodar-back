@@ -19,7 +19,8 @@ class CreateEmployeeUserRequest(BaseModel):
     name: str
     surname: str
     patronymic: str
-    workplace_id: UUID
+    city: str = 'Краснодар'
+    address: str
     grade: WorkerGradeEnum
 
 

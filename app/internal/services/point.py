@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from internal.repositories.db.models.point import Point
 from internal.repositories.db.points import PointRepository
-from internal.tasks import load_durations_for_point
+from internal.tasks import load_durations_for_workplace
 
 
 class PointService:
@@ -23,7 +23,7 @@ class PointService:
         except IntegrityError as e:
             raise HTTPException(status_code=409, detail='Workplace already exists') from e
 
-        load_durations_for_point.delay(workplace.point_id, city, address, True)
+        load_durations_for_workplace.delay(workplace.point_id, city, address)
 
         return workplace.point_id
 
