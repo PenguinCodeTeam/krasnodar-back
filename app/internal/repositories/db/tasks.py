@@ -152,17 +152,29 @@ class TaskRepository(DatabaseRepository):
 
     async def get_work_schedule(
         self,
+        task_id: uuid.UUID | Type[Empty] = Empty,
         date: date | Type[Empty] = Empty,
         user_id: uuid.UUID | Type[Empty] = Empty,
         task_number: int | Type[Empty] = Empty,
+        grade: WorkerGradeEnum | Type[Empty] = Empty,
+        priority: PriorityEnum | Type[Empty] = Empty,
+        status: TaskStatusEnum | Type[Empty] = Empty,
     ) -> tuple[WorkSchedule]:
         filters = []
+        if task_id is not Empty:
+            filters.append(WorkSchedule.task_id == task_id)
         if user_id is not Empty:
             filters.append(WorkSchedule.user_id == user_id)
         if task_number is not Empty:
             filters.append(WorkSchedule.task_number == task_number)
         if date is not Empty:
             filters.append(WorkSchedule.date == date)
+        if grade is not Empty:
+            filters.append(WorkSchedule.worker.grade == grade)
+        if priority is not Empty:
+            filters.append(WorkSchedule.task.task_type.priority == priority)
+        if status is not Empty:
+            filters.append(WorkSchedule.task.status == status)
 
         query = select(WorkSchedule).where(*filters)
         async with self.transaction() as session:
@@ -170,13 +182,11 @@ class TaskRepository(DatabaseRepository):
 
         return res.unique().scalars().all()
 
-    async def update_task(
-        self,
-        task: Task,
-        status: TaskStatusEnum | Type[Empty] = Empty,
-    ) -> tuple[WorkSchedule]:
+    async def update_task(self, task: Task, status: TaskStatusEnum | Type[Empty] = Empty, message: str | Type[Empty] = Empty) -> Task:
         if status is not Empty:
             task.status = status
+        if message is not Empty:
+            task.message = message
 
         async with self.transaction() as session:
             session.add(task)

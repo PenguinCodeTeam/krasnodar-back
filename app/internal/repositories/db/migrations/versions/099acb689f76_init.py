@@ -94,6 +94,7 @@ def upgrade() -> None:
         sa.Column('point_id', sa.Uuid(), nullable=False),
         sa.Column('status', sa.Enum('OPEN', 'APPOINTED', 'CLOSED', name='taskstatusenum'), nullable=False),
         sa.Column('active_from', sa.Date(), nullable=False),
+        sa.Column('message', sa.String(), nullable=True),
         sa.ForeignKeyConstraint(
             ['point_id'],
             ['points.id'],

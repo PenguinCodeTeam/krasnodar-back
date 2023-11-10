@@ -1,14 +1,16 @@
 from datetime import date
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
 
-from internal.core.types import TaskStatusEnum
+from internal.core.types import PriorityEnum, TaskStatusEnum, WorkerGradeEnum
 
 
 class GetTasksRequest(BaseModel):
-    user_id: Optional[UUID]
+    grade: WorkerGradeEnum | None = None
+    priority: PriorityEnum | None = None
+    status: TaskStatusEnum | None = None
+    user_id: UUID | None = None
     date: date
 
 
