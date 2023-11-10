@@ -14,7 +14,7 @@ class TaskService:
     def __init__(self):
         self.repository = TaskRepository()
 
-    async def get_tasks(
+    async def get_appointed_tasks(
         self,
         date: datetime.date,
         user_id: UUID | Type[Empty] = Empty,
@@ -25,13 +25,13 @@ class TaskService:
         tasks = await self.repository.get_work_schedule(date=date, user_id=user_id, grade=grade, priority=priority, status=status)
         return [form_task_response(task) for task in tasks]
 
-    async def get_task(self, task_id: UUID) -> dict:
+    async def get_appointed_task(self, task_id: UUID) -> dict:
         tasks = await self.repository.get_work_schedule(task_id)
         if not tasks:
             raise HTTPException(status_code=404, detail='Task not found')
         return form_task_response(tasks[0])
 
-    async def update_task(self, task_id: UUID, status: TaskStatusEnum, message: str) -> dict:
+    async def update_appointed_task(self, task_id: UUID, status: TaskStatusEnum, message: str) -> dict:
         tasks = await self.repository.get_work_schedule(task_id)
         if not tasks:
             raise HTTPException(status_code=404, detail='Task not found')

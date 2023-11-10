@@ -15,7 +15,7 @@ TASKS_ROUTER = APIRouter(prefix='/tasks', tags=['Tasks'], dependencies=[Depends(
 @TASKS_ROUTER.get('/appointed/{task_id}')
 async def get_task_handler(task_id: UUID, service: TaskService = Depends()):
     """Получение задачи по id"""
-    data = await service.get_task(task_id)
+    data = await service.get_appointed_task(task_id)
     return data
 
 
@@ -23,12 +23,12 @@ async def get_task_handler(task_id: UUID, service: TaskService = Depends()):
 @TASKS_ROUTER.put('/appointed/{task_id}')
 async def update_task_handler(task_id: UUID, request_data: UpdateTaskRequest, service: TaskService = Depends()) -> GetAppointedAppointedTaskResponse:
     """Изменение задачи"""
-    data = await service.update_task(task_id, request_data.status, request_data.message)
+    data = await service.update_appointed_task(task_id, request_data.status, request_data.message)
     return GetAppointedAppointedTaskResponse.model_validate(data)
 
 
 @TASKS_ROUTER.get('/appointed/')
 async def get_tasks_handler(request_data: GetTasksRequest = Depends(), service: TaskService = Depends()) -> GetAppointedTasksResponse:
     """Получение всех задач с фильтрацией по дате и пользователю"""
-    data = await service.get_tasks(**request_data.model_dump(exclude_none=True))
+    data = await service.get_appointed_tasks(**request_data.model_dump(exclude_none=True))
     return GetAppointedTasksResponse(tasks=data)
