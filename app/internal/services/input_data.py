@@ -20,7 +20,7 @@ class InputDataService:
                 raise HTTPException(status_code=423, detail='Locked.')
 
         task = update_input_data.delay(destinations, city, for_date=datetime.date.today())
-        await self.celery_task_id_repository.update_task(task_id=UUID(task.id), task_name='update_input_data')
+        await self.celery_task_id_repository.update_task(task_id=UUID(task.id), task_name='update_input_data', date=datetime.date.today())
         response = {'status': get_status(task.status), 'result': None}
         if task.successful():
             response['result'] = await task.result
