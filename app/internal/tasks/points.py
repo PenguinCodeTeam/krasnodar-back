@@ -2,17 +2,17 @@ import asyncio
 from math import ceil
 from uuid import UUID
 
-from config import TOMTOM_API_KEY, YANDEX_GEOCODER_API_KEY
+from config import GEOAPIFY_API_KEY, YANDEX_GEOCODER_API_KEY
 from internal.repositories.db import PointRepository
 from internal.repositories.yandex_geocoder import YandexGeocoderRepository
 from internal.tasks.worker import celery
 
-from app.internal.repositories.tomtom import TomTomRepository
+from app.internal.repositories.geoapify import GeoapifyRepository
 
 
 async def async_load_durations_for_workplace(workplace_id: UUID, workplace_city: str, workplace_address: str) -> None:
     point_repository = PointRepository()
-    tomtom_repository = TomTomRepository(api_key=TOMTOM_API_KEY)
+    geoapify_repository = GeoapifyRepository(api_key=GEOAPIFY_API_KEY)
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
 
     db_destinations = await point_repository.get_destinations()
@@ -35,7 +35,7 @@ async def async_load_durations_for_workplace(workplace_id: UUID, workplace_city:
             {
                 'from_point_id': workplace_id,
                 'to_point_id': destination_id,
-                'duration': tomtom_repository.get_duration(workplace_coordinates, destination_coordinates),
+                'duration': geoapify_repository.get_duration(workplace_coordinates, destination_coordinates),
             }
         )
 
@@ -46,6 +46,8 @@ async def async_load_durations_for_workplace(workplace_id: UUID, workplace_city:
         duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 5, min((attempt + 1) * 5, len(to_add_durations)))]
         durations.extend(await asyncio.gather(*duration_tasks))
     for index in range(len(to_add_durations)):
+        if durations[index] == -1:
+            continue
         await point_repository.add_points_duration(
             from_point_id=to_add_durations[index]['from_point_id'], to_point_id=to_add_durations[index]['to_point_id'], duration=durations[index]
         )
@@ -58,7 +60,7 @@ def load_durations_for_workplace(workplace_id: UUID, workplace_city: str, workpl
 
 async def load_durations_for_points() -> None:
     point_repository = PointRepository()
-    tomtom_repository = TomTomRepository(api_key=TOMTOM_API_KEY)
+    geoapify_repository = GeoapifyRepository(api_key=GEOAPIFY_API_KEY)
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
 
     db_destinations = await point_repository.get_destinations()
@@ -94,7 +96,7 @@ async def load_durations_for_points() -> None:
                 {
                     'from_point_id': workplace_id,
                     'to_point_id': destination_id,
-                    'duration': tomtom_repository.get_duration(workplace_coordinates, destination_coordinates),
+                    'duration': geoapify_repository.get_duration(workplace_coordinates, destination_coordinates),
                 }
             )
 
@@ -103,7 +105,7 @@ async def load_durations_for_points() -> None:
             if from_id == to_id or await point_repository.get_points_duration(from_id, to_id):
                 continue
             to_add_durations.append(
-                {'from_point_id': from_id, 'to_point_id': to_id, 'duration': tomtom_repository.get_duration(from_coordinates, to_coordinates)}
+                {'from_point_id': from_id, 'to_point_id': to_id, 'duration': geoapify_repository.get_duration(from_coordinates, to_coordinates)}
             )
 
     durations = []
@@ -113,6 +115,8 @@ async def load_durations_for_points() -> None:
         duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 5, min((attempt + 1) * 5, len(to_add_durations)))]
         durations.extend(await asyncio.gather(*duration_tasks))
     for index in range(len(to_add_durations)):
+        if durations[index] == -1:
+            continue
         await point_repository.add_points_duration(
             from_point_id=to_add_durations[index]['from_point_id'], to_point_id=to_add_durations[index]['to_point_id'], duration=durations[index]
         )
