@@ -1,3 +1,4 @@
+import datetime
 import uuid
 
 from sqlalchemy.orm import Mapped, mapped_column
@@ -10,3 +11,4 @@ class CeleryTask(Base):
 
     id: Mapped[uuid.UUID]
     task_name: Mapped[str] = mapped_column(primary_key=True)
+    date: Mapped[datetime.date] = mapped_column(primary_key=True)

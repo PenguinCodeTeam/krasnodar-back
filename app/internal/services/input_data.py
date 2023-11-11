@@ -13,7 +13,7 @@ class InputDataService:
         self.celery_task_id_repository = CeleryTaskRepository()
 
     async def set_input_data(self, destinations: dict, city: str):
-        task = await self.celery_task_id_repository.get_task(task_name='update_input_data')
+        task = await self.celery_task_id_repository.get_task(task_name='update_input_data', date=datetime.date.today())
         if task is not None:
             task = get_task_by_id(str(task.id))
             if not task.ready():
@@ -26,8 +26,8 @@ class InputDataService:
             response['result'] = await task.result
         return response
 
-    async def get_input_data(self):
-        task = await self.celery_task_id_repository.get_task(task_name='update_input_data')
+    async def get_input_data(self, date: datetime.date):
+        task = await self.celery_task_id_repository.get_task(task_name='update_input_data', date=date)
         if task is None:
             raise HTTPException(status_code=404, detail='Not found.')
         task = get_task_by_id(str(task.id))
