@@ -22,7 +22,7 @@ class DistributionService:
         if task is not None:
             task = get_task_by_id(str(task.id))
             if not task.ready():
-                return HTTPException(status_code=423, detail='Locked.')
+                raise HTTPException(status_code=423, detail='Locked.')
 
         task = tasks_distribution.delay()
         await self.celery_task_id_repository.update_task(task_id=UUID(task.id), task_name='tasks_distribution', date=datetime.date.today())

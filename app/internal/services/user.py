@@ -1,3 +1,4 @@
+import datetime
 from typing import Type
 from uuid import UUID
 
@@ -5,6 +6,7 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from internal.core.types import Empty, RoleEnum, WorkerGradeEnum
+from internal.repositories.db.celery import CeleryTaskRepository
 from internal.repositories.db.models.point import Point
 from internal.repositories.db.models.user import User, Worker
 from internal.repositories.db.points import PointRepository
@@ -14,6 +16,7 @@ from internal.tasks import load_durations_for_workplace
 
 class UserService:
     def __init__(self):
+        self.celery_task_id_repository = CeleryTaskRepository()
         self.user_repository = UserRepository()
         self.point_repository = PointRepository()
 
@@ -41,7 +44,8 @@ class UserService:
         workplace = await self.point_repository.get_workplace(point_id=point.id)
         if not workplace:
             workplace = await self.point_repository.add_workplace(point_id=point.id)
-            load_durations_for_workplace.delay(workplace.point_id, city, address)
+            task = load_durations_for_workplace.delay(workplace.point_id, city, address)
+            await self.celery_task_id_repository.update_task(task_id=UUID(task.id), task_name='load_durations_for_workplace', date=datetime.date.today())
 
         employee = await self.user_repository.add_worker(user_id=user.id, workplace_id=workplace.point_id, grade=grade)
 

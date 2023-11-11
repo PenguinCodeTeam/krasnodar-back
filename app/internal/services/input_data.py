@@ -17,7 +17,7 @@ class InputDataService:
         if task is not None:
             task = get_task_by_id(str(task.id))
             if not task.ready():
-                return HTTPException(status_code=423, detail='Locked.')
+                raise HTTPException(status_code=423, detail='Locked.')
 
         task = update_input_data.delay(destinations, city, for_date=datetime.date.today())
         await self.celery_task_id_repository.update_task(task_id=UUID(task.id), task_name='update_input_data')
