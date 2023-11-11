@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import APIRouter, Body, Depends
 
 from internal.api.v1.schemas.request.manager import SetInputDataRequest
@@ -10,9 +12,11 @@ INPUT_ROUTER = APIRouter(tags=['Input'], dependencies=[Depends(ManagerAuthorize(
 
 
 @INPUT_ROUTER.get('/input_data')
-async def get_input_data(service: InputDataService = Depends()) -> GetInputDataResponse:
+async def get_input_data(service: InputDataService = Depends(), date: datetime.date | None = None) -> GetInputDataResponse:
     """Получение текущих входных данных"""
-    response = await service.get_input_data()
+    if date is None:
+        date = datetime.date.today()
+    response = await service.get_input_data(date)
     return GetInputDataResponse.model_validate(response)
 
 
