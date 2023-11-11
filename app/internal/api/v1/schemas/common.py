@@ -13,7 +13,13 @@ class IdModel(BaseModel):
 class Point(BaseModel):
     id: UUID
     address: str
-    city: str = 'Краснодар'
+
+
+class Employee(BaseModel):
+    grade: WorkerGradeEnum
+    name: str
+    surname: str
+    patronymic: str
 
 
 class Task(BaseModel):
@@ -24,7 +30,7 @@ class Task(BaseModel):
     time: int
     point: Point
     date: date
-    employee_id: UUID
+    employee: Employee
 
 
 class DestinationDataRow(BaseModel):
