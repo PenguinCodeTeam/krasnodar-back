@@ -1,22 +1,38 @@
 import asyncio
+from datetime import date
 from math import ceil
 from uuid import UUID
 
-from config import OPEN_ROUTE_SERVICE_API_KEY, YANDEX_GEOCODER_API_KEY
+from config import GEOAPIFY_API_KEY, YANDEX_GEOCODER_API_KEY
 from internal.repositories.db import PointRepository
-from internal.repositories.open_route_service import OpenRouteServiceRepository
+from internal.repositories.db.celery import CeleryTaskRepository
 from internal.repositories.yandex_geocoder import YandexGeocoderRepository
-from internal.tasks.worker import celery
+from internal.tasks.worker import celery, get_task_by_id
+
+from app.internal.repositories.geoapify import GeoapifyRepository
 
 
 async def async_load_durations_for_workplace(workplace_id: UUID, workplace_city: str, workplace_address: str) -> None:
+    celery_task_repository = CeleryTaskRepository()
+
+    while True:
+        task = await celery_task_repository.get_task(task_name='update_input_data', date=date.today())
+        if task is not None:
+            task = get_task_by_id(str(task.id))
+            if task.ready():
+                break
+        else:
+            break
+
     point_repository = PointRepository()
-    open_route_service = OpenRouteServiceRepository(api_key=OPEN_ROUTE_SERVICE_API_KEY)
+    geoapify_repository = GeoapifyRepository(api_key=GEOAPIFY_API_KEY)
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
 
     db_destinations = await point_repository.get_destinations()
     coordinates = []
     for attempt in range(int(ceil(len(db_destinations) / 50))):
+        if attempt > 0:
+            await asyncio.sleep(1)
         coordinate_tasks = [
             yandex_geocoder.get_coordinates(city=db_destinations[index].point.city, address=db_destinations[index].point.address)
             for index in range(attempt * 50, min((attempt + 1) * 50, len(db_destinations)))
@@ -32,15 +48,28 @@ async def async_load_durations_for_workplace(workplace_id: UUID, workplace_city:
             {
                 'from_point_id': workplace_id,
                 'to_point_id': destination_id,
-                'duration': open_route_service.get_duration(workplace_coordinates, destination_coordinates),
+                'duration': geoapify_repository.get_duration(workplace_coordinates, destination_coordinates),
             }
         )
 
     durations = []
-    for attempt in range(int(ceil(len(to_add_durations) / 40))):
-        duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 40, min((attempt + 1) * 40, len(to_add_durations)))]
-        durations.extend(await asyncio.gather(*duration_tasks))
+    for attempt in range(int(ceil(len(to_add_durations) / 5))):
+        if attempt > 0:
+            await asyncio.sleep(1)
+        cnt = 0
+        while cnt < 10:
+            try:
+                duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 5, min((attempt + 1) * 5, len(to_add_durations)))]
+                durations.extend(await asyncio.gather(*duration_tasks))
+                break
+            except:
+                cnt += 1
+                await asyncio.sleep(5)
+        if cnt == 5:
+            durations.extend([-1, -1, -1, -1, -1])
     for index in range(len(to_add_durations)):
+        if durations[index] == -1:
+            continue
         await point_repository.add_points_duration(
             from_point_id=to_add_durations[index]['from_point_id'], to_point_id=to_add_durations[index]['to_point_id'], duration=durations[index]
         )
@@ -52,13 +81,26 @@ def load_durations_for_workplace(workplace_id: UUID, workplace_city: str, workpl
 
 
 async def load_durations_for_points() -> None:
+    celery_task_repository = CeleryTaskRepository()
+
+    while True:
+        task = await celery_task_repository.get_task(task_name='load_durations_for_workplace', date=date.today())
+        if task is not None:
+            task = get_task_by_id(str(task.id))
+            if task.ready():
+                break
+        else:
+            break
+
     point_repository = PointRepository()
-    open_route_service = OpenRouteServiceRepository(api_key=OPEN_ROUTE_SERVICE_API_KEY)
+    geoapify_repository = GeoapifyRepository(api_key=GEOAPIFY_API_KEY)
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
 
     db_destinations = await point_repository.get_destinations()
     coordinates = []
     for attempt in range(int(ceil(len(db_destinations) / 50))):
+        if attempt > 0:
+            await asyncio.sleep(1)
         coordinate_tasks = [
             yandex_geocoder.get_coordinates(city=db_destinations[index].point.city, address=db_destinations[index].point.address)
             for index in range(attempt * 50, min((attempt + 1) * 50, len(db_destinations)))
@@ -69,6 +111,8 @@ async def load_durations_for_points() -> None:
     db_workplaces = await point_repository.get_workplaces()
     coordinates = []
     for attempt in range(int(ceil(len(db_workplaces) / 50))):
+        if attempt > 0:
+            await asyncio.sleep(1)
         coordinate_tasks = [
             yandex_geocoder.get_coordinates(city=db_workplaces[index].point.city, address=db_workplaces[index].point.address)
             for index in range(attempt * 50, min((attempt + 1) * 50, len(db_workplaces)))
@@ -85,7 +129,7 @@ async def load_durations_for_points() -> None:
                 {
                     'from_point_id': workplace_id,
                     'to_point_id': destination_id,
-                    'duration': open_route_service.get_duration(workplace_coordinates, destination_coordinates),
+                    'duration': geoapify_repository.get_duration(workplace_coordinates, destination_coordinates),
                 }
             )
 
@@ -94,14 +138,27 @@ async def load_durations_for_points() -> None:
             if from_id == to_id or await point_repository.get_points_duration(from_id, to_id):
                 continue
             to_add_durations.append(
-                {'from_point_id': from_id, 'to_point_id': to_id, 'duration': open_route_service.get_duration(from_coordinates, to_coordinates)}
+                {'from_point_id': from_id, 'to_point_id': to_id, 'duration': geoapify_repository.get_duration(from_coordinates, to_coordinates)}
             )
 
     durations = []
-    for attempt in range(int(ceil(len(to_add_durations) / 40))):
-        duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 40, min((attempt + 1) * 40, len(to_add_durations)))]
-        durations.extend(await asyncio.gather(*duration_tasks))
+    for attempt in range(int(ceil(len(to_add_durations) / 5))):
+        if attempt > 0:
+            await asyncio.sleep(1)
+        cnt = 0
+        while cnt < 10:
+            try:
+                duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 5, min((attempt + 1) * 5, len(to_add_durations)))]
+                durations.extend(await asyncio.gather(*duration_tasks))
+                break
+            except:
+                cnt += 1
+                await asyncio.sleep(5)
+        if cnt == 5:
+            durations.extend([-1, -1, -1, -1, -1])
     for index in range(len(to_add_durations)):
+        if durations[index] == -1:
+            continue
         await point_repository.add_points_duration(
             from_point_id=to_add_durations[index]['from_point_id'], to_point_id=to_add_durations[index]['to_point_id'], duration=durations[index]
         )

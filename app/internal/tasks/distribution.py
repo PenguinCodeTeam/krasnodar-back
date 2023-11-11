@@ -5,8 +5,9 @@ from uuid import UUID
 
 from internal.core.types import PriorityEnum, TaskStatusEnum, WorkerGradeEnum
 from internal.repositories.db import PointRepository, TaskRepository, UserRepository
+from internal.repositories.db.celery import CeleryTaskRepository
 from internal.repositories.db.models import Task
-from internal.tasks.worker import celery
+from internal.tasks.worker import celery, get_task_by_id
 
 
 MAX_WORKING_MINUTES = 8 * 60
@@ -118,6 +119,25 @@ async def save_tasks_by_workers(task_repository: TaskRepository, distributed_tas
 
 
 async def async_tasks_distribution():
+    celery_task_repository = CeleryTaskRepository()
+    while True:
+        task = await celery_task_repository.get_task(task_name='update_input_data', date=date.today())
+        if task is not None:
+            task = get_task_by_id(str(task.id))
+            if task.ready():
+                break
+        else:
+            break
+
+    while True:
+        task = await celery_task_repository.get_task(task_name='load_durations_for_workplace', date=date.today())
+        if task is not None:
+            task = get_task_by_id(str(task.id))
+            if task.ready():
+                break
+        else:
+            break
+
     point_repository = UserRepository()
     task_repository = TaskRepository()
 
@@ -137,7 +157,7 @@ async def async_tasks_distribution():
     for worker in workers:
         workers_by_grade[worker.grade].append(worker)
     used_points = set()
-    for grade in [WorkerGradeEnum.SENIOR, WorkerGradeEnum.MIDDLE, WorkerGradeEnum.JUNIOR]:
+    for grade in [WorkerGradeEnum.JUNIOR, WorkerGradeEnum.MIDDLE, WorkerGradeEnum.SENIOR]:
         for worker in workers_by_grade[grade]:
             distributed_tasks_by_workers[worker.user_id], _ = get_best_route(
                 graph=graph,
