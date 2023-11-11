@@ -61,11 +61,14 @@ class TaskRepository(DatabaseRepository):
 
     async def get_task(
         self,
+        task_id: uuid.UUID | Type[Empty] = Empty,
         task_type_id: uuid.UUID | Type[Empty] = Empty,
         point_id: uuid.UUID | Type[Empty] = Empty,
         status: TaskStatusEnum | Type[Empty] = Empty,
     ) -> Task | None:
         filters = []
+        if task_id is not Empty:
+            filters.append(Task.id == task_id)
         if task_type_id is not Empty:
             filters.append(Task.task_type_id == task_type_id)
         if point_id is not Empty:
