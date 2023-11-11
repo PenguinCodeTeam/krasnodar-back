@@ -83,13 +83,25 @@ class UserService:
         name: str | Type[Empty] = Empty,
         surname: str | Type[Empty] = Empty,
         patronymic: str | Type[Empty] = Empty,
-        workplace_id: UUID | Type[Empty] = Empty,
+        city: str | Type[Empty] = Empty,
+        address: str | Type[Empty] = Empty,
         grade: WorkerGradeEnum | Type[Empty] = Empty,
     ):
         worker = await self.user_repository.get_worker(user_id=user_id)
         if not worker:
             raise HTTPException(status_code=404, detail='User not found')
-        await self.user_repository.update_worker(worker, workplace_id=workplace_id, grade=grade)
+
+        point = await self.point_repository.get_point(city=city, address=address)
+        if not point:
+            point = await self.point_repository.add_point(city=city, address=address)
+
+        workplace = await self.point_repository.get_workplace(point_id=point.id)
+        if not workplace:
+            workplace = await self.point_repository.add_workplace(point_id=point.id)
+            task = load_durations_for_workplace.delay(workplace.point_id, city, address)
+            await self.celery_task_id_repository.update_task(task_id=UUID(task.id), task_name='load_durations_for_workplace', date=datetime.date.today())
+
+        await self.user_repository.update_worker(worker, workplace_id=workplace.point_id, grade=grade)
 
         try:
             await self.user_repository.update_user(worker.user, login=login, password=password, name=name, surname=surname, patronymic=patronymic)

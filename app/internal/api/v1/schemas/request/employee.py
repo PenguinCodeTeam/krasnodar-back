@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from pydantic import BaseModel
 
 from internal.core.types import WorkerGradeEnum
@@ -25,10 +23,11 @@ class CreateEmployeeUserRequest(BaseModel):
 
 
 class UpdateEmployeeRequest(BaseModel):
-    login: str = None
-    password: str = None
-    name: str = None
-    surname: str = None
-    patronymic: str = None
-    workplace_id: UUID = None
-    grade: WorkerGradeEnum = None
+    login: str | None = None
+    password: str | None = None
+    name: str | None = None
+    surname: str | None = None
+    patronymic: str | None = None
+    address: str | None = None
+    city: str | None = 'Краснодар'
+    grade: WorkerGradeEnum | None = None
