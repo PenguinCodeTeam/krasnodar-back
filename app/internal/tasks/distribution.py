@@ -157,7 +157,7 @@ async def async_tasks_distribution():
     for worker in workers:
         workers_by_grade[worker.grade].append(worker)
     used_points = set()
-    for grade in [WorkerGradeEnum.SENIOR, WorkerGradeEnum.MIDDLE, WorkerGradeEnum.JUNIOR]:
+    for grade in [WorkerGradeEnum.JUNIOR, WorkerGradeEnum.MIDDLE, WorkerGradeEnum.SENIOR]:
         for worker in workers_by_grade[grade]:
             distributed_tasks_by_workers[worker.user_id], _ = get_best_route(
                 graph=graph,

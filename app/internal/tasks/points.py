@@ -1,16 +1,29 @@
 import asyncio
+from datetime import date
 from math import ceil
 from uuid import UUID
 
 from config import GEOAPIFY_API_KEY, YANDEX_GEOCODER_API_KEY
 from internal.repositories.db import PointRepository
+from internal.repositories.db.celery import CeleryTaskRepository
 from internal.repositories.yandex_geocoder import YandexGeocoderRepository
-from internal.tasks.worker import celery
+from internal.tasks.worker import celery, get_task_by_id
 
 from app.internal.repositories.geoapify import GeoapifyRepository
 
 
 async def async_load_durations_for_workplace(workplace_id: UUID, workplace_city: str, workplace_address: str) -> None:
+    celery_task_repository = CeleryTaskRepository()
+
+    while True:
+        task = await celery_task_repository.get_task(task_name='update_input_data', date=date.today())
+        if task is not None:
+            task = get_task_by_id(str(task.id))
+            if task.ready():
+                break
+        else:
+            break
+
     point_repository = PointRepository()
     geoapify_repository = GeoapifyRepository(api_key=GEOAPIFY_API_KEY)
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
@@ -43,8 +56,17 @@ async def async_load_durations_for_workplace(workplace_id: UUID, workplace_city:
     for attempt in range(int(ceil(len(to_add_durations) / 5))):
         if attempt > 0:
             await asyncio.sleep(1)
-        duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 5, min((attempt + 1) * 5, len(to_add_durations)))]
-        durations.extend(await asyncio.gather(*duration_tasks))
+        cnt = 0
+        while cnt < 10:
+            try:
+                duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 5, min((attempt + 1) * 5, len(to_add_durations)))]
+                durations.extend(await asyncio.gather(*duration_tasks))
+                break
+            except:
+                cnt += 1
+                await asyncio.sleep(5)
+        if cnt == 5:
+            durations.extend([-1, -1, -1, -1, -1])
     for index in range(len(to_add_durations)):
         if durations[index] == -1:
             continue
@@ -59,6 +81,17 @@ def load_durations_for_workplace(workplace_id: UUID, workplace_city: str, workpl
 
 
 async def load_durations_for_points() -> None:
+    celery_task_repository = CeleryTaskRepository()
+
+    while True:
+        task = await celery_task_repository.get_task(task_name='load_durations_for_workplace', date=date.today())
+        if task is not None:
+            task = get_task_by_id(str(task.id))
+            if task.ready():
+                break
+        else:
+            break
+
     point_repository = PointRepository()
     geoapify_repository = GeoapifyRepository(api_key=GEOAPIFY_API_KEY)
     yandex_geocoder = YandexGeocoderRepository(api_key=YANDEX_GEOCODER_API_KEY)
@@ -112,8 +145,17 @@ async def load_durations_for_points() -> None:
     for attempt in range(int(ceil(len(to_add_durations) / 5))):
         if attempt > 0:
             await asyncio.sleep(1)
-        duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 5, min((attempt + 1) * 5, len(to_add_durations)))]
-        durations.extend(await asyncio.gather(*duration_tasks))
+        cnt = 0
+        while cnt < 10:
+            try:
+                duration_tasks = [to_add_durations[index]['duration'] for index in range(attempt * 5, min((attempt + 1) * 5, len(to_add_durations)))]
+                durations.extend(await asyncio.gather(*duration_tasks))
+                break
+            except:
+                cnt += 1
+                await asyncio.sleep(5)
+        if cnt == 5:
+            durations.extend([-1, -1, -1, -1, -1])
     for index in range(len(to_add_durations)):
         if durations[index] == -1:
             continue
