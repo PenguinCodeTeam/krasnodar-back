@@ -21,7 +21,14 @@ class InputDataService:
 
         filtered_destinations = []
         for destination in destinations:
-            if destination['address'] != '' and destination['connected_at'] != '':
+            if (
+                destination['address'] is not None
+                and destination['connected_at'] is not None
+                and destination['is_delivered'] is not None
+                and destination['days_after_delivery'] is not None
+                and destination['accepted_requests'] is not None
+                and destination['completed_requests'] is not None
+            ):
                 filtered_destinations.append(destination)
         task = update_input_data.delay(filtered_destinations, city, for_date=datetime.date.today())
         await self.celery_task_id_repository.update_task(task_id=UUID(task.id), task_name='update_input_data', date=datetime.date.today())

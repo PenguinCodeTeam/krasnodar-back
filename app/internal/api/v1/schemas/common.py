@@ -35,11 +35,11 @@ class Task(BaseModel):
 
 
 class DestinationDataRow(BaseModel):
-    connected_at: str
-    is_delivered: bool
-    days_after_delivery: int
-    accepted_requests: int
-    completed_requests: int
+    connected_at: str | None = None
+    is_delivered: bool | None = None
+    days_after_delivery: int | None = None
+    accepted_requests: int | None = None
+    completed_requests: int | None = None
 
 
 class DestinationDataRowRequest(DestinationDataRow):
