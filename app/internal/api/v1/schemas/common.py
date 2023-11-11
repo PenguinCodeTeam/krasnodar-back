@@ -13,6 +13,7 @@ class IdModel(BaseModel):
 class Point(BaseModel):
     id: UUID
     address: str
+    city: str
 
 
 class Employee(BaseModel):

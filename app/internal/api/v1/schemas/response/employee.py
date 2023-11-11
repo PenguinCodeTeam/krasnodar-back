@@ -1,11 +1,7 @@
 from pydantic import BaseModel
 
-from internal.api.v1.schemas.common import IdModel, Point, Task
+from internal.api.v1.schemas.common import IdModel, Point
 from internal.core.types import RoleEnum, WorkerGradeEnum
-
-
-class GetEmployeeTasksResponse(BaseModel):
-    tasks: list[Task]
 
 
 class GetEmployeeResponse(IdModel):
