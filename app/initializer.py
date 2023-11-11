@@ -50,9 +50,9 @@ def logging_initialize():
 def create_app() -> FastAPI:
     app = FastAPI(
         lifespan=initialize,
-        docs_url=f'{config.APP_URL_PREFIX}/api/docs',
-        redoc_url=f'{config.APP_URL_PREFIX}/api/redocs',
-        openapi_url=f'{config.APP_URL_PREFIX}/api/openapi.json',
+        docs_url=f'{config.APP_URL_PREFIX}/docs',
+        redoc_url=f'{config.APP_URL_PREFIX}/redocs',
+        openapi_url=f'{config.APP_URL_PREFIX}/openapi.json',
     )
     add_middlewares(app)
     add_exception_handlers(app)

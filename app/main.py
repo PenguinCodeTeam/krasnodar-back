@@ -16,6 +16,7 @@ def main():
         log_config=LOGGING,
         reload=config.DEV,
         workers=cpu_count(),
+        root_path='/api',
     )
 
 
