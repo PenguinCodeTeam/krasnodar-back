@@ -18,14 +18,14 @@ async def get_manager_handler(user_id: UUID, service: UserService = Depends()) -
     return GetManagerResponse.model_validate(data)
 
 
-@MANAGER_ROUTER.get('/')
+@MANAGER_ROUTER.get('')
 async def get_managers_handler(service: UserService = Depends()) -> GetManagersResponse:
     """Получение всех менеджеров"""
     data = await service.get_managers()
     return GetManagersResponse(managers=data)
 
 
-@MANAGER_ROUTER.post('/')
+@MANAGER_ROUTER.post('')
 async def create_manager_handler(request_data: CreateManagerRequest, service: UserService = Depends()) -> CreateManagerResponse:
     """Создание нового менеджера"""
     created_manager_id = await service.create_manager(**request_data.model_dump())

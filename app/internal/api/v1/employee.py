@@ -11,14 +11,14 @@ from internal.services.user import UserService
 EMPLOYEE_ROUTER = APIRouter(prefix='/employee', tags=['Employee'])
 
 
-@EMPLOYEE_ROUTER.get('/', dependencies=[Depends(ManagerAuthorize())])
+@EMPLOYEE_ROUTER.get('', dependencies=[Depends(ManagerAuthorize())])
 async def get_all_employees_handler(service: UserService = Depends()) -> GetEmployeesResponse:
     """Получение всех сотрудников. Для менеджера"""
     data = await service.get_employees()
     return GetEmployeesResponse(employees=data)
 
 
-@EMPLOYEE_ROUTER.post('/', dependencies=[Depends(ManagerAuthorize())])
+@EMPLOYEE_ROUTER.post('', dependencies=[Depends(ManagerAuthorize())])
 async def create_employee_handler(request_data: CreateEmployeeUserRequest = Body(), service: UserService = Depends()) -> CreateEmployeeResponse:
     """Создание профиля работника. Для менеджера"""
     user_id = await service.create_employee(**request_data.model_dump())
